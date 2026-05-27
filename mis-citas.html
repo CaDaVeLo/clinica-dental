@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Citas - Clínica Dental</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+ 
+    <nav>
+        <a href="index.html">Inicio</a>
+        <a href="servicios.html">Servicios</a>
+        <a href="mis-citas.html" class="activo">Mis citas</a>
+        <a href="contacto.html">Contacto</a>
+        <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
+    </nav>
+ 
+    <div class="mis-citas-pagina">
+        <p class="etiqueta-seccion">GESTIÓN</p>
+        <h1 class="titulo-pagina">Mis <span>Citas</span></h1>
+        <p class="subtitulo-pagina">Busca con tu email o número de documento para ver tus citas.</p>
+ 
+        <div class="buscador">
+            <input type="text" placeholder="Tu@email.com ó número de documento">
+            <button>Buscar</button>
+        </div>
+ 
+        <p class="conteo-citas">3 citas encontradas</p>
+ 
+        <div class="cita-card">
+            <div class="cita-header">
+                <h3>Limpieza Dental</h3>
+                <span class="badge confirmada">Confirmada</span>
+            </div>
+            <p class="cita-info">2025-03-20 &nbsp; 09:30 &nbsp; Dra. García &nbsp; $800 MXN</p>
+            <div class="cita-acciones">
+                <button class="btn-reprogramar">Reprogramar</button>
+                <button class="btn-cancelar">Cancelar</button>
+            </div>
+        </div>
+ 
+        <div class="cita-card">
+            <div class="cita-header">
+                <h3>Blanqueamiento</h3>
+                <span class="badge pendiente">Pendiente</span>
+            </div>
+            <p class="cita-info">2025-03-28 &nbsp; 10:30 &nbsp; Dr. Barraza &nbsp; $2,500 MXN</p>
+            <div class="cita-acciones">
+                <button class="btn-reprogramar">Reprogramar</button>
+                <button class="btn-cancelar">Cancelar</button>
+            </div>
+        </div>
+ 
+        <br>
+        <div style="text-align: center;">
+            <a href="agenda-paciente.html" class="btn-siguiente">Agendar Nueva Cita</a>
+        </div>
+    </div>
+ 
+</body>
+</html>
