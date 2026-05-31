@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
- 
+
     <nav>
         <a href="index.html">Inicio</a>
         <a href="servicios.html">Servicios</a>
@@ -15,7 +15,7 @@
         <a href="contacto.html">Contacto</a>
         <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
     </nav>
- 
+
     <div class="contenedor-agenda">
         <div class="panel-izquierdo">
             <h2>Agenda tu cita</h2>
@@ -25,19 +25,19 @@
                 <span>Email y SMS al instante</span>
             </div>
             <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
+                <strong>Sin llamadas</strong>
                 <span>Cancela hasta 24 horas</span>
             </div>
             <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Información 100% segura</span>
+                <strong>100% seguro</strong>
+                <span>Información protegida</span>
             </div>
             <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
+                <strong>Flexibilidad de pago</strong>
                 <span>Efectivo o tarjeta</span>
             </div>
         </div>
- 
+
         <div class="panel-derecho">
             <div class="pasos">
                 <div class="paso">Paciente</div>
@@ -45,49 +45,66 @@
                 <div class="paso">Fecha y hora</div>
                 <div class="paso activo">Pago</div>
             </div>
- 
+
             <h3>Método de Pago</h3>
- 
+
+            <!-- class="metodo-btn" — agenda-pago.js escucha clics para cambiar metodoPago -->
             <div class="metodos-pago">
                 <div class="metodo-btn seleccionado">Efectivo</div>
                 <div class="metodo-btn">Débito</div>
                 <div class="metodo-btn">Crédito</div>
                 <div class="metodo-btn">Seguro</div>
             </div>
- 
+
             <div class="resumen-cita">
                 <h4>Resumen de tu cita</h4>
                 <div class="resumen-fila">
                     <span>Paciente</span>
-                    <span>Carlos</span>
+                    <!-- data-campo="paciente" — agenda-pago.js escribe aquí el nombre del paciente -->
+                    <span data-campo="paciente"></span>
                 </div>
                 <div class="resumen-fila">
                     <span>Servicio</span>
-                    <span>Implante Dental</span>
+                    <!-- data-campo="servicio" — agenda-pago.js escribe aquí el nombre del servicio -->
+                    <span data-campo="servicio"></span>
                 </div>
                 <div class="resumen-fila">
                     <span>Fecha</span>
-                    <span>22 de mayo 2026</span>
+                    <!-- data-campo="fecha" — agenda-pago.js escribe aquí la fecha elegida -->
+                    <span data-campo="fecha"></span>
                 </div>
                 <div class="resumen-fila">
                     <span>Hora</span>
-                    <span>13:00</span>
+                    <!-- data-campo="hora" — agenda-pago.js escribe aquí la hora elegida -->
+                    <span data-campo="hora"></span>
                 </div>
                 <div class="resumen-fila">
-                    <span>Pago</span>
-                    <span>Efectivo</span>
+                    <span>Doctor</span>
+                    <!-- data-campo="doctor" — agenda-pago.js escribe aquí el nombre del doctor -->
+                    <span data-campo="doctor"></span>
+                </div>
+                <div class="resumen-fila">
+                    <span>Método de pago</span>
+                    <!-- data-campo="pago" — agenda-pago.js actualiza esto al cambiar el método -->
+                    <span data-campo="pago">Efectivo</span>
                 </div>
                 <div class="resumen-fila">
                     <span>Total</span>
-                    <span>$12,000 MXN</span>
+                    <!-- data-campo="total" — agenda-pago.js escribe aquí el precio del servicio -->
+                    <span data-campo="total"></span>
                 </div>
             </div>
- 
+
+            <!-- id="error-msg" — agenda-pago.js muestra aquí errores que devuelve la API -->
+            <p id="error-msg" class="error" style="display:none"></p>
+
             <br>
             <a href="agenda-fecha.html" class="btn-atras">Atrás</a>
-            <a href="mis-citas.html" class="btn-siguiente">Siguiente: Elegir servicio</a>
+            <!-- class="btn-confirmar" — agenda-pago.js hace el POST /citas al hacer clic -->
+            <button class="btn-confirmar btn-siguiente">Confirmar cita</button>
         </div>
     </div>
- 
+
+    <script type="module" src="js/agenda-pago.js"></script>
 </body>
 </html>
