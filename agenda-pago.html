@@ -20,22 +20,10 @@
         <div class="panel-izquierdo">
             <h2>Agenda tu cita</h2>
             <p class="subtitulo">4 pasos rápidos, sin llamadas</p>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Email y SMS al instante</span>
-            </div>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Cancela hasta 24 horas</span>
-            </div>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Información 100% segura</span>
-            </div>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Efectivo o tarjeta</span>
-            </div>
+            <div class="ventaja"><strong>Confirmación inmediata</strong><span>Email y SMS al instante</span></div>
+            <div class="ventaja"><strong>Cancela fácil</strong><span>Hasta 24 horas antes</span></div>
+            <div class="ventaja"><strong>100% seguro</strong><span>Información protegida</span></div>
+            <div class="ventaja"><strong>Flexible</strong><span>Efectivo o tarjeta</span></div>
         </div>
  
         <div class="panel-derecho">
@@ -48,46 +36,23 @@
  
             <h3>Método de Pago</h3>
  
+            <div id="mensaje-error" style="color:red; margin-bottom:10px; display:none;"></div>
+ 
             <div class="metodos-pago">
-                <div class="metodo-btn seleccionado">Efectivo</div>
-                <div class="metodo-btn">Débito</div>
-                <div class="metodo-btn">Crédito</div>
-                <div class="metodo-btn">Seguro</div>
+                <div class="metodo-btn" onclick="seleccionarPago('efectivo', this)">Efectivo</div>
+                <div class="metodo-btn" onclick="seleccionarPago('debito', this)">Débito</div>
+                <div class="metodo-btn" onclick="seleccionarPago('credito', this)">Crédito</div>
+                <div class="metodo-btn" onclick="seleccionarPago('seguro', this)">Seguro</div>
             </div>
  
-            <div class="resumen-cita">
-                <h4>Resumen de tu cita</h4>
-                <div class="resumen-fila">
-                    <span>Paciente</span>
-                    <span>Carlos</span>
-                </div>
-                <div class="resumen-fila">
-                    <span>Servicio</span>
-                    <span>Implante Dental</span>
-                </div>
-                <div class="resumen-fila">
-                    <span>Fecha</span>
-                    <span>22 de mayo 2026</span>
-                </div>
-                <div class="resumen-fila">
-                    <span>Hora</span>
-                    <span>13:00</span>
-                </div>
-                <div class="resumen-fila">
-                    <span>Pago</span>
-                    <span>Efectivo</span>
-                </div>
-                <div class="resumen-fila">
-                    <span>Total</span>
-                    <span>$12,000 MXN</span>
-                </div>
-            </div>
+            <div class="resumen-cita" id="resumen"></div>
  
             <br>
             <a href="agenda-fecha.html" class="btn-atras">Atrás</a>
-            <a href="mis-citas.html" class="btn-siguiente">Siguiente: Elegir servicio</a>
+            <button class="btn-siguiente" onclick="confirmar()">Confirmar cita</button>
         </div>
     </div>
  
+    <script src="js/agenda-pago.js"></script>
 </body>
 </html>
