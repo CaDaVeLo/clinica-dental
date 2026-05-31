@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elegir Servicio - Clínica Dental</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+ 
+    <nav>
+        <a href="index.html">Inicio</a>
+        <a href="servicios.html">Servicios</a>
+        <a href="mis-citas.html">Mis citas</a>
+        <a href="contacto.html">Contacto</a>
+        <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
+    </nav>
+ 
+    <div class="contenedor-agenda">
+        <div class="panel-izquierdo">
+            <h2>Agenda tu cita</h2>
+            <p class="subtitulo">4 pasos rápidos, sin llamadas</p>
+            <div class="ventaja"><strong>Confirmación inmediata</strong><span>Email y SMS al instante</span></div>
+            <div class="ventaja"><strong>Cancela fácil</strong><span>Hasta 24 horas antes</span></div>
+            <div class="ventaja"><strong>100% seguro</strong><span>Información protegida</span></div>
+            <div class="ventaja"><strong>Flexible</strong><span>Efectivo o tarjeta</span></div>
+        </div>
+ 
+        <div class="panel-derecho">
+            <div class="pasos">
+                <div class="paso">Paciente</div>
+                <div class="paso activo">Servicio</div>
+                <div class="paso">Fecha y hora</div>
+                <div class="paso">Pago</div>
+            </div>
+ 
+            <h3>Selecciona el Tratamiento</h3>
+ 
+            <div class="lista-tratamientos" id="lista-tratamientos">
+                <p>Cargando servicios...</p>
+            </div>
+ 
+            <br>
+            <a href="agenda-paciente.html" class="btn-atras">Atrás</a>
+            <button class="btn-siguiente" onclick="siguiente()">Siguiente: Elegir fecha</button>
+        </div>
+    </div>
+ 
+    <script src="js/agenda-servicio.js"></script>
+</body>
+</html>
