@@ -20,22 +20,10 @@
         <div class="panel-izquierdo">
             <h2>Agenda tu cita</h2>
             <p class="subtitulo">4 pasos rápidos, sin llamadas</p>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Email y SMS al instante</span>
-            </div>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Cancela hasta 24 horas</span>
-            </div>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Información 100% segura</span>
-            </div>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Efectivo o tarjeta</span>
-            </div>
+            <div class="ventaja"><strong>Confirmación inmediata</strong><span>Email y SMS al instante</span></div>
+            <div class="ventaja"><strong>Cancela fácil</strong><span>Hasta 24 horas antes</span></div>
+            <div class="ventaja"><strong>100% seguro</strong><span>Información protegida</span></div>
+            <div class="ventaja"><strong>Flexible</strong><span>Efectivo o tarjeta</span></div>
         </div>
  
         <div class="panel-derecho">
@@ -51,83 +39,31 @@
             <div class="calendario-contenedor">
                 <div class="calendario">
                     <div class="cal-header">
-                        <button>&lt;</button>
-                        <span>mayo 2026</span>
-                        <button>&gt;</button>
+                        <button onclick="cambiarMes(-1)">&lt;</button>
+                        <span id="mes-anio"></span>
+                        <button onclick="cambiarMes(1)">&gt;</button>
                     </div>
                     <div class="cal-dias-semana">
-                        <span>LUN</span>
-                        <span>MAR</span>
-                        <span>MIÉ</span>
-                        <span>JUE</span>
-                        <span>VIE</span>
-                        <span>SÁB</span>
-                        <span>DOM</span>
+                        <span>LUN</span><span>MAR</span><span>MIÉ</span><span>JUE</span><span>VIE</span><span>SÁB</span><span>DOM</span>
                     </div>
-                    <div class="cal-dias">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span class="disponible">1</span>
-                        <span class="disponible">2</span>
-                        <span class="disponible">3</span>
-                        <span class="disponible">4</span>
-                        <span class="disponible">5</span>
-                        <span class="disponible">6</span>
-                        <span class="disponible">7</span>
-                        <span class="disponible">8</span>
-                        <span class="disponible">9</span>
-                        <span class="disponible">10</span>
-                        <span class="disponible">11</span>
-                        <span class="disponible">12</span>
-                        <span class="disponible">13</span>
-                        <span class="disponible">14</span>
-                        <span class="disponible">15</span>
-                        <span class="seleccionado">16</span>
-                        <span class="disponible">17</span>
-                        <span class="disponible">18</span>
-                        <span class="disponible">19</span>
-                        <span class="disponible">20</span>
-                        <span class="disponible">21</span>
-                        <span class="disponible">22</span>
-                        <span class="disponible">23</span>
-                        <span class="disponible">24</span>
-                        <span class="disponible">25</span>
-                        <span class="disponible">26</span>
-                        <span class="disponible">27</span>
-                        <span class="disponible">28</span>
-                        <span class="disponible">29</span>
-                        <span class="disponible">30</span>
-                        <span class="disponible">31</span>
-                    </div>
+                    <div class="cal-dias" id="cal-dias"></div>
                 </div>
  
                 <div class="horarios-contenedor">
                     <h4>Horarios disponibles</h4>
-                    <div class="horarios-grid">
-                        <div class="horario-btn seleccionado">08:00</div>
-                        <div class="horario-btn">08:30</div>
-                        <div class="horario-btn ocupado">09:00</div>
-                        <div class="horario-btn">09:30</div>
-                        <div class="horario-btn ocupado">10:00</div>
-                        <div class="horario-btn">10:30</div>
-                        <div class="horario-btn">11:00</div>
-                        <div class="horario-btn">11:30</div>
-                        <div class="horario-btn">12:00</div>
-                        <div class="horario-btn">12:30</div>
-                        <div class="horario-btn">13:30</div>
-                        <div class="horario-btn">14:00</div>
-                        <div class="horario-btn">14:30</div>
+                    <div class="horarios-grid" id="horarios-grid">
+                        <p style="font-size:13px; color:#888;">Selecciona una fecha</p>
                     </div>
                 </div>
             </div>
  
             <br>
             <a href="agenda-servicio.html" class="btn-atras">Atrás</a>
-            <a href="agenda-pago.html" class="btn-siguiente">Siguiente: Elegir servicio</a>
+            <button class="btn-siguiente" onclick="siguiente()">Siguiente: Pago</button>
         </div>
     </div>
  
+    <script src="js/agenda-fecha.js"></script>
 </body>
 </html>
+ 

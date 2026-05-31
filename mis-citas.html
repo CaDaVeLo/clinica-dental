@@ -19,38 +19,14 @@
     <div class="mis-citas-pagina">
         <p class="etiqueta-seccion">GESTIÓN</p>
         <h1 class="titulo-pagina">Mis <span>Citas</span></h1>
-        <p class="subtitulo-pagina">Busca con tu email o número de documento para ver tus citas.</p>
+        <p class="subtitulo-pagina">Busca con tu email o CURP para ver tus citas.</p>
  
         <div class="buscador">
-            <input type="text" placeholder="Tu@email.com ó número de documento">
-            <button>Buscar</button>
+            <input type="text" id="input-buscar" placeholder="Tu@email.com ó CURP">
+            <button onclick="buscar()">Buscar</button>
         </div>
  
-        <p class="conteo-citas">3 citas encontradas</p>
- 
-        <div class="cita-card">
-            <div class="cita-header">
-                <h3>Limpieza Dental</h3>
-                <span class="badge confirmada">Confirmada</span>
-            </div>
-            <p class="cita-info">2025-03-20 &nbsp; 09:30 &nbsp; Dra. García &nbsp; $800 MXN</p>
-            <div class="cita-acciones">
-                <button class="btn-reprogramar">Reprogramar</button>
-                <button class="btn-cancelar">Cancelar</button>
-            </div>
-        </div>
- 
-        <div class="cita-card">
-            <div class="cita-header">
-                <h3>Blanqueamiento</h3>
-                <span class="badge pendiente">Pendiente</span>
-            </div>
-            <p class="cita-info">2025-03-28 &nbsp; 10:30 &nbsp; Dr. Barraza &nbsp; $2,500 MXN</p>
-            <div class="cita-acciones">
-                <button class="btn-reprogramar">Reprogramar</button>
-                <button class="btn-cancelar">Cancelar</button>
-            </div>
-        </div>
+        <div id="resultado"></div>
  
         <br>
         <div style="text-align: center;">
@@ -58,5 +34,6 @@
         </div>
     </div>
  
+    <script src="js/mis-citas.js"></script>
 </body>
 </html>

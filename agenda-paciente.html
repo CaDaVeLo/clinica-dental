@@ -20,22 +20,10 @@
         <div class="panel-izquierdo">
             <h2>Agenda tu cita</h2>
             <p class="subtitulo">4 pasos rápidos, sin llamadas</p>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Email y SMS al instante</span>
-            </div>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Cancela hasta 24 horas</span>
-            </div>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Información 100% segura</span>
-            </div>
-            <div class="ventaja">
-                <strong>Confirmación inmediata</strong>
-                <span>Efectivo o tarjeta</span>
-            </div>
+            <div class="ventaja"><strong>Confirmación inmediata</strong><span>Email y SMS al instante</span></div>
+            <div class="ventaja"><strong>Cancela fácil</strong><span>Hasta 24 horas antes</span></div>
+            <div class="ventaja"><strong>100% seguro</strong><span>Información protegida</span></div>
+            <div class="ventaja"><strong>Flexible</strong><span>Efectivo o tarjeta</span></div>
         </div>
  
         <div class="panel-derecho">
@@ -48,31 +36,34 @@
  
             <h3>Datos del paciente</h3>
  
+            <div id="mensaje-error" style="color:red; margin-bottom:10px; display:none;"></div>
+ 
             <div class="fila-form">
                 <div class="campo">
                     <label>Nombre completo *</label>
-                    <input type="text" placeholder="Velarde López Carlos Daniel">
+                    <input type="text" id="nombre" placeholder="Carlos Velarde">
                 </div>
                 <div class="campo">
                     <label>CURP *</label>
-                    <input type="text" placeholder="VERCMHSLLPRA3">
+                    <input type="text" id="curp" placeholder="VERCMHSLLPRA301">
                 </div>
             </div>
  
             <div class="fila-form">
                 <div class="campo">
                     <label>Correo electrónico *</label>
-                    <input type="email" placeholder="Andree@gmail.com">
+                    <input type="email" id="email" placeholder="correo@gmail.com">
                 </div>
                 <div class="campo">
                     <label>Teléfono *</label>
-                    <input type="tel" placeholder="6657325525">
+                    <input type="tel" id="telefono" placeholder="6657325525">
                 </div>
             </div>
  
-            <a href="agenda-servicio.html" class="btn-siguiente">Siguiente: Elegir servicio</a>
+            <button class="btn-siguiente" onclick="siguiente()">Siguiente: Elegir servicio</button>
         </div>
     </div>
  
+    <script src="js/agenda-paciente.js"></script>
 </body>
 </html>

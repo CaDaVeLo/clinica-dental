@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Doctor - Clínica Dental</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/panel.css">
+</head>
+<body>
+ 
+    <div class="panel-layout">
+        <aside class="sidebar">
+            <div class="sidebar-logo">Clínica Dental</div>
+            <p class="sidebar-rol">Doctor</p>
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-link activo" onclick="mostrarSeccion('hoy', this)">Citas de hoy</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('horario', this)">Mi horario</a>
+            </nav>
+            <button class="btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar sesión</button>
+        </aside>
+ 
+        <main class="panel-contenido">
+            <div class="panel-header">
+                <h1 id="titulo-seccion">Citas de hoy</h1>
+                <span id="nombre-usuario"></span>
+            </div>
+ 
+            <!-- CITAS DE HOY -->
+            <div id="seccion-hoy">
+                <div id="lista-citas-hoy"></div>
+            </div>
+ 
+            <!-- HORARIO -->
+            <div id="seccion-horario" style="display:none;">
+                <div id="tabla-horario"></div>
+            </div>
+        </main>
+    </div>
+ 
+    <!-- MODAL EXPEDIENTE -->
+    <div id="modal-expediente" class="modal" style="display:none;">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h3 id="titulo-expediente">Expediente del paciente</h3>
+                <button onclick="cerrarModal('modal-expediente')" class="modal-cerrar">✕</button>
+            </div>
+            <div class="fila-form">
+                <div class="campo"><label>Alergias</label><input type="text" id="exp-alergias"></div>
+                <div class="campo"><label>Enfermedades</label><input type="text" id="exp-enfermedades"></div>
+            </div>
+            <div class="fila-form">
+                <div class="campo"><label>Medicamentos</label><input type="text" id="exp-medicamentos"></div>
+                <div class="campo"><label>Antecedentes</label><input type="text" id="exp-antecedentes"></div>
+            </div>
+            <div class="campo" style="margin-bottom:16px;">
+                <label>Notas generales</label>
+                <textarea id="exp-notas" style="border:1px solid #ddd; border-radius:8px; padding:10px; width:100%; height:100px; font-family:inherit; font-size:14px; resize:vertical;"></textarea>
+            </div>
+            <div id="error-expediente" style="color:red; font-size:13px; display:none; margin-top:8px;"></div>
+            <div style="margin-top:20px;">
+                <button class="btn-siguiente" onclick="guardarExpediente()">Guardar expediente</button>
+                <button class="btn-atras" onclick="cerrarModal('modal-expediente')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- MODAL NOTAS CITA -->
+    <div id="modal-notas" class="modal" style="display:none;">
+        <div class="modal-contenido" style="max-width:420px;">
+            <div class="modal-header">
+                <h3>Notas de la cita</h3>
+                <button onclick="cerrarModal('modal-notas')" class="modal-cerrar">✕</button>
+            </div>
+            <div class="campo">
+                <label>Notas del tratamiento</label>
+                <textarea id="notas-cita" style="border:1px solid #ddd; border-radius:8px; padding:10px; width:100%; height:120px; font-family:inherit; font-size:14px; resize:vertical;"></textarea>
+            </div>
+            <div style="margin-top:16px;">
+                <button class="btn-siguiente" onclick="guardarNotas()">Guardar</button>
+                <button class="btn-atras" onclick="cerrarModal('modal-notas')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+ 
+    <script src="js/panel-doctor.js"></script>
+</body>
+</html>

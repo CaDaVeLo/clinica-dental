@@ -62,3 +62,33 @@ CREATE TABLE pagos (
     referencia VARCHAR(100),
     creado_en TIMESTAMP DEFAULT NOW()
 );
+
+INSERT INTO servicios (nombre, descripcion, duracion_min, precio, categoria, activo) VALUES
+('Limpieza Dental', 'Eliminación de placa y sarro con ultrasonido. Incluye pulido y flúor.', 60, 800, 'Preventivo', true),
+('Diagnóstico Digital', 'Radiografías digitales y evaluación 3D completa de tu salud bucal.', 45, 600, 'Diagnostico', true),
+('Blanqueamiento', 'Blanqueamiento profesional con gel activado con luz LED.', 90, 2500, 'Estético', true),
+('Implante Dental', 'Implantes de titanio de alta calidad para reemplazar dientes perdidos.', 120, 12000, 'Cirugía', true),
+('Ortodoncia', 'Brackets metálicos, cerámicos y alineadores invisibles.', 60, 4000, 'Ortodoncia', true),
+('Endodoncia', 'Tratamiento de conducto para salvar dientes con infección grave.', 90, 2500, 'Preventivo', true);
+
+INSERT INTO doctores (nombre, especialidad, email, telefono, activo) VALUES
+('Dr. Barraza', 'Odontología General', 'barraza@clinica.com', '6651234567', true),
+('Dra. García', 'Ortodoncia', 'garcia@clinica.com', '6659876543', true);
+
+INSERT INTO horarios (doctor_id, dia_semana, hora_inicio, hora_fin, activo) VALUES
+(1, 1, '08:00', '14:00', true),
+(1, 2, '08:00', '14:00', true),
+(1, 3, '08:00', '14:00', true),
+(1, 4, '08:00', '14:00', true),
+(1, 5, '08:00', '14:00', true),
+(1, 6, '08:00', '13:00', true),
+(2, 1, '10:00', '18:00', true),
+(2, 2, '10:00', '18:00', true),
+(2, 3, '10:00', '18:00', true),
+(2, 4, '10:00', '18:00', true),
+(2, 5, '10:00', '18:00', true),
+(2, 6, '10:00', '15:00', true);
+
+SELECT * FROM pacientes;
+
+DELETE FROM pacientes WHERE id = 1;

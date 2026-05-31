@@ -1,8 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { Op } from 'sequelize';
-import { sequelize, Paciente, Servicio, Doctor, Horario, Cita, Pago } from './models/models.js';
+import { sequelize, Paciente, Expediente, Servicio, Doctor, Horario, Cita, Pago, Usuario } from './models/models.js';
  
 dotenv.config();
  
@@ -10,7 +12,64 @@ const app = express();
 app.use(cors());
 app.use(express.json());
  
-//  PACIENTES
+const SECRET = process.env.JWT_SECRET || 'clinica_secret_2024';
+ 
+function verificarToken(req, res, next) {
+    const auth = req.headers['authorization'];
+    if (!auth) return res.status(401).json({ error: 'Sin token' });
+    const token = auth.split(' ')[1];
+    try {
+        req.usuario = jwt.verify(token, SECRET);
+        next();
+    } catch (e) {
+        res.status(401).json({ error: 'Token inválido' });
+    }
+}
+ 
+function soloRol(...roles) {
+    return (req, res, next) => {
+        if (!roles.includes(req.usuario.rol)) {
+            return res.status(403).json({ error: 'Sin permisos' });
+        }
+        next();
+    };
+}
+ 
+// ---------- AUTH ----------
+ 
+app.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const usuario = await Usuario.findOne({ where: { email } });
+        if (!usuario) return res.status(401).json({ error: 'Credenciales incorrectas' });
+ 
+        const valido = await bcrypt.compare(password, usuario.password);
+        if (!valido) return res.status(401).json({ error: 'Credenciales incorrectas' });
+ 
+        const token = jwt.sign(
+            { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol, doctor_id: usuario.doctor_id },
+            SECRET,
+            { expiresIn: '8h' }
+        );
+ 
+        res.json({ token, usuario: { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol, doctor_id: usuario.doctor_id } });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+ 
+app.post('/usuarios', async (req, res) => {
+    try {
+        const { nombre, email, password, rol, doctor_id } = req.body;
+        const hash = await bcrypt.hash(password, 10);
+        const usuario = await Usuario.create({ nombre, email, password: hash, rol, doctor_id });
+        res.status(201).json({ id: usuario.id, nombre: usuario.nombre, rol: usuario.rol });
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+ 
+// ---------- PACIENTES ----------
  
 app.get('/pacientes', async (req, res) => {
     try {
@@ -23,7 +82,9 @@ app.get('/pacientes', async (req, res) => {
  
 app.get('/pacientes/:id', async (req, res) => {
     try {
-        const paciente = await Paciente.findByPk(req.params.id);
+        const paciente = await Paciente.findByPk(req.params.id, {
+            include: [{ model: Expediente }]
+        });
         if (!paciente) return res.status(404).json({ error: 'Paciente no encontrado' });
         res.json(paciente);
     } catch (e) {
@@ -59,7 +120,7 @@ app.post('/pacientes', async (req, res) => {
     }
 });
  
-app.put('/pacientes/:id', async (req, res) => {
+app.put('/pacientes/:id', verificarToken, async (req, res) => {
     try {
         const paciente = await Paciente.findByPk(req.params.id);
         if (!paciente) return res.status(404).json({ error: 'Paciente no encontrado' });
@@ -70,7 +131,36 @@ app.put('/pacientes/:id', async (req, res) => {
     }
 });
  
-//  SERVICIOS 
+// ---------- EXPEDIENTES ----------
+ 
+app.get('/expedientes/:paciente_id', verificarToken, async (req, res) => {
+    try {
+        const expediente = await Expediente.findOne({
+            where: { paciente_id: req.params.paciente_id },
+            include: [{ model: Paciente }]
+        });
+        if (!expediente) return res.status(404).json({ error: 'Expediente no encontrado' });
+        res.json(expediente);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+ 
+app.post('/expedientes', verificarToken, async (req, res) => {
+    try {
+        const existente = await Expediente.findOne({ where: { paciente_id: req.body.paciente_id } });
+        if (existente) {
+            await existente.update(req.body);
+            return res.json(existente);
+        }
+        const expediente = await Expediente.create(req.body);
+        res.status(201).json(expediente);
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+ 
+// ---------- SERVICIOS ----------
  
 app.get('/servicios', async (req, res) => {
     try {
@@ -81,17 +171,7 @@ app.get('/servicios', async (req, res) => {
     }
 });
  
-app.get('/servicios/:id', async (req, res) => {
-    try {
-        const servicio = await Servicio.findByPk(req.params.id);
-        if (!servicio) return res.status(404).json({ error: 'Servicio no encontrado' });
-        res.json(servicio);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
- 
-app.post('/servicios', async (req, res) => {
+app.post('/servicios', verificarToken, soloRol('recepcionista'), async (req, res) => {
     try {
         const servicio = await Servicio.create(req.body);
         res.status(201).json(servicio);
@@ -100,18 +180,7 @@ app.post('/servicios', async (req, res) => {
     }
 });
  
-app.put('/servicios/:id', async (req, res) => {
-    try {
-        const servicio = await Servicio.findByPk(req.params.id);
-        if (!servicio) return res.status(404).json({ error: 'Servicio no encontrado' });
-        await servicio.update(req.body);
-        res.json(servicio);
-    } catch (e) {
-        res.status(400).json({ error: e.message });
-    }
-});
- 
-//  DOCTORES 
+// ---------- DOCTORES ----------
  
 app.get('/doctores', async (req, res) => {
     try {
@@ -122,7 +191,7 @@ app.get('/doctores', async (req, res) => {
     }
 });
  
-app.get('/doctores/:id/horarios', async (req, res) => {
+app.get('/doctores/:id/horarios', verificarToken, async (req, res) => {
     try {
         const horarios = await Horario.findAll({
             where: { doctor_id: req.params.id, activo: true }
@@ -133,16 +202,7 @@ app.get('/doctores/:id/horarios', async (req, res) => {
     }
 });
  
-app.post('/doctores', async (req, res) => {
-    try {
-        const doctor = await Doctor.create(req.body);
-        res.status(201).json(doctor);
-    } catch (e) {
-        res.status(400).json({ error: e.message });
-    }
-});
- 
-// DISPONIBILIDAD 
+// ---------- DISPONIBILIDAD ----------
  
 app.get('/disponibilidad', async (req, res) => {
     try {
@@ -170,7 +230,6 @@ app.get('/disponibilidad', async (req, res) => {
         horarios.forEach(h => {
             let actual = new Date(`1970-01-01T${h.hora_inicio}`);
             const fin = new Date(`1970-01-01T${h.hora_fin}`);
- 
             while (actual < fin) {
                 const hora_str = actual.toTimeString().slice(0, 5);
                 slots.push({
@@ -189,12 +248,18 @@ app.get('/disponibilidad', async (req, res) => {
     }
 });
  
-//  CITAS 
+// ---------- CITAS ----------
  
-app.get('/citas', async (req, res) => {
+app.get('/citas', verificarToken, async (req, res) => {
     try {
+        const where = {};
+        if (req.usuario.rol === 'doctor') where.doctor_id = req.usuario.doctor_id;
+        if (req.query.fecha) where.fecha = req.query.fecha;
+ 
         const citas = await Cita.findAll({
-            include: [{ model: Paciente }, { model: Servicio }, { model: Doctor }]
+            where,
+            include: [{ model: Paciente }, { model: Servicio }, { model: Doctor }, { model: Pago }],
+            order: [['fecha', 'ASC'], ['hora', 'ASC']]
         });
         res.json(citas);
     } catch (e) {
@@ -202,7 +267,7 @@ app.get('/citas', async (req, res) => {
     }
 });
  
-app.get('/citas/:id', async (req, res) => {
+app.get('/citas/:id', verificarToken, async (req, res) => {
     try {
         const cita = await Cita.findByPk(req.params.id, {
             include: [{ model: Paciente }, { model: Servicio }, { model: Doctor }, { model: Pago }]
@@ -237,14 +302,8 @@ app.post('/citas', async (req, res) => {
         if (!servicio) return res.status(404).json({ error: 'Servicio no encontrado' });
  
         const cita = await Cita.create({
-            paciente_id: id_paciente,
-            servicio_id,
-            doctor_id,
-            fecha,
-            hora,
-            estado: 'pendiente',
-            metodo_pago,
-            notas
+            paciente_id: id_paciente, servicio_id, doctor_id,
+            fecha, hora, estado: 'pendiente', metodo_pago, notas
         });
  
         await Pago.create({
@@ -264,7 +323,7 @@ app.post('/citas', async (req, res) => {
     }
 });
  
-app.put('/citas/:id/estado', async (req, res) => {
+app.put('/citas/:id/estado', verificarToken, soloRol('recepcionista'), async (req, res) => {
     try {
         const { estado } = req.body;
         const estados = ['pendiente', 'confirmada', 'cancelada', 'completada'];
@@ -280,7 +339,18 @@ app.put('/citas/:id/estado', async (req, res) => {
     }
 });
  
-app.put('/citas/:id/reprogramar', async (req, res) => {
+app.put('/citas/:id/notas', verificarToken, soloRol('doctor'), async (req, res) => {
+    try {
+        const cita = await Cita.findByPk(req.params.id);
+        if (!cita) return res.status(404).json({ error: 'Cita no encontrada' });
+        await cita.update({ notas: req.body.notas });
+        res.json(cita);
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+ 
+app.put('/citas/:id/reprogramar', verificarToken, async (req, res) => {
     try {
         const { fecha, hora, doctor_id } = req.body;
         const cita = await Cita.findByPk(req.params.id);
@@ -309,19 +379,21 @@ app.delete('/citas/:id', async (req, res) => {
     }
 });
  
-//  PAGOS 
+// ---------- PAGOS ----------
  
-app.get('/pagos/:cita_id', async (req, res) => {
+app.get('/pagos', verificarToken, soloRol('recepcionista'), async (req, res) => {
     try {
-        const pago = await Pago.findOne({ where: { cita_id: req.params.cita_id } });
-        if (!pago) return res.status(404).json({ error: 'Pago no encontrado' });
-        res.json(pago);
+        const pagos = await Pago.findAll({
+            include: [{ model: Cita, include: [{ model: Paciente }, { model: Servicio }] }],
+            order: [['creado_en', 'DESC']]
+        });
+        res.json(pagos);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
  
-app.put('/pagos/:id', async (req, res) => {
+app.put('/pagos/:id', verificarToken, async (req, res) => {
     try {
         const pago = await Pago.findByPk(req.params.id);
         if (!pago) return res.status(404).json({ error: 'Pago no encontrado' });
@@ -332,7 +404,7 @@ app.put('/pagos/:id', async (req, res) => {
     }
 });
  
-//  INICIAR 
+// ---------- INICIAR ----------
  
 const PORT = process.env.PORT || 3000;
  
