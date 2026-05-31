@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Recepcionista - Clínica Dental</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/panel.css">
+</head>
+<body>
+ 
+    <div class="panel-layout">
+        <aside class="sidebar">
+            <div class="sidebar-logo">Clínica Dental</div>
+            <p class="sidebar-rol">Recepcionista</p>
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-link activo" onclick="mostrarSeccion('citas', this)">Citas</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('pacientes', this)">Pacientes</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('pagos', this)">Pagos</a>
+            </nav>
+            <button class="btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar sesión</button>
+        </aside>
+ 
+        <main class="panel-contenido">
+            <div class="panel-header">
+                <h1 id="titulo-seccion">Citas</h1>
+                <span id="nombre-usuario"></span>
+            </div>
+ 
+            <!-- CITAS -->
+            <div id="seccion-citas">
+                <div style="display:flex; gap:12px; margin-bottom:20px; align-items:center;">
+                    <input type="date" id="filtro-fecha" class="input-fecha" onchange="cargarCitas()">
+                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="cargarCitas()">Filtrar</button>
+                    <button class="btn-outline-azul" onclick="limpiarFiltro()">Ver todas</button>
+                </div>
+                <div id="tabla-citas"></div>
+            </div>
+ 
+            <!-- PACIENTES -->
+            <div id="seccion-pacientes" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <input type="text" id="buscar-paciente" placeholder="Buscar por nombre, email o CURP..." style="border:1px solid #ddd; border-radius:8px; padding:10px 14px; width:320px; font-size:14px;" oninput="filtrarPacientes()">
+                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="abrirModalPaciente()">+ Nuevo paciente</button>
+                </div>
+                <div id="tabla-pacientes"></div>
+            </div>
+ 
+            <!-- PAGOS -->
+            <div id="seccion-pagos" style="display:none;">
+                <div id="tabla-pagos"></div>
+            </div>
+        </main>
+    </div>
+ 
+    <!-- MODAL NUEVO PACIENTE -->
+    <div id="modal-paciente" class="modal" style="display:none;">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h3>Nuevo Paciente</h3>
+                <button onclick="cerrarModal('modal-paciente')" class="modal-cerrar">✕</button>
+            </div>
+            <div class="fila-form">
+                <div class="campo"><label>Nombre *</label><input type="text" id="p-nombre"></div>
+                <div class="campo"><label>CURP *</label><input type="text" id="p-curp"></div>
+            </div>
+            <div class="fila-form">
+                <div class="campo"><label>Email *</label><input type="email" id="p-email"></div>
+                <div class="campo"><label>Teléfono</label><input type="tel" id="p-telefono"></div>
+            </div>
+            <div class="fila-form">
+                <div class="campo"><label>Fecha de nacimiento</label><input type="date" id="p-fecha-nac"></div>
+                <div class="campo"><label>Dirección</label><input type="text" id="p-direccion"></div>
+            </div>
+            <div id="error-paciente" style="color:red; font-size:13px; display:none; margin-top:8px;"></div>
+            <div style="margin-top:20px;">
+                <button class="btn-siguiente" onclick="guardarPaciente()">Guardar</button>
+                <button class="btn-atras" onclick="cerrarModal('modal-paciente')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- MODAL CAMBIAR ESTADO CITA -->
+    <div id="modal-estado" class="modal" style="display:none;">
+        <div class="modal-contenido" style="max-width:360px;">
+            <div class="modal-header">
+                <h3>Cambiar estado</h3>
+                <button onclick="cerrarModal('modal-estado')" class="modal-cerrar">✕</button>
+            </div>
+            <p style="font-size:14px; color:#555; margin-bottom:16px;">Selecciona el nuevo estado para la cita.</p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="metodo-btn" onclick="cambiarEstado('confirmada')">Confirmar</button>
+                <button class="metodo-btn" onclick="cambiarEstado('completada')">Completada</button>
+                <button class="metodo-btn" style="color:#ef4444; border-color:#fca5a5;" onclick="cambiarEstado('cancelada')">Cancelar cita</button>
+            </div>
+        </div>
+    </div>
+ 
+    <script src="js/panel-recepcionista.js"></script>
+</body>
+</html>

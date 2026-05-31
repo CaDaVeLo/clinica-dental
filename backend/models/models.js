@@ -12,6 +12,16 @@ const Paciente = sequelize.define('pacientes', {
     activo: { type: DataTypes.BOOLEAN, defaultValue: true }
 }, { timestamps: true, createdAt: 'creado_en', updatedAt: false });
  
+const Expediente = sequelize.define('expedientes', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    paciente_id: { type: DataTypes.INTEGER, allowNull: false, unique: true },
+    alergias: { type: DataTypes.TEXT },
+    enfermedades: { type: DataTypes.TEXT },
+    medicamentos: { type: DataTypes.TEXT },
+    antecedentes: { type: DataTypes.TEXT },
+    notas_generales: { type: DataTypes.TEXT }
+}, { timestamps: true, createdAt: 'creado_en', updatedAt: 'actualizado_en' });
+ 
 const Servicio = sequelize.define('servicios', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     nombre: { type: DataTypes.STRING(100), allowNull: false },
@@ -62,6 +72,15 @@ const Pago = sequelize.define('pagos', {
     referencia: { type: DataTypes.STRING(100) }
 }, { timestamps: true, createdAt: 'creado_en', updatedAt: false });
  
+const Usuario = sequelize.define('usuarios', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    nombre: { type: DataTypes.STRING(100), allowNull: false },
+    email: { type: DataTypes.STRING(150), allowNull: false, unique: true },
+    password: { type: DataTypes.STRING(255), allowNull: false },
+    rol: { type: DataTypes.STRING(20), allowNull: false },
+    doctor_id: { type: DataTypes.INTEGER }
+}, { timestamps: false });
+ 
 Doctor.hasMany(Horario, { foreignKey: 'doctor_id' });
 Horario.belongsTo(Doctor, { foreignKey: 'doctor_id' });
  
@@ -77,4 +96,8 @@ Cita.belongsTo(Doctor, { foreignKey: 'doctor_id' });
 Cita.hasOne(Pago, { foreignKey: 'cita_id' });
 Pago.belongsTo(Cita, { foreignKey: 'cita_id' });
  
-export { sequelize, Paciente, Servicio, Doctor, Horario, Cita, Pago };
+Paciente.hasOne(Expediente, { foreignKey: 'paciente_id' });
+Expediente.belongsTo(Paciente, { foreignKey: 'paciente_id' });
+ 
+export { sequelize, Paciente, Expediente, Servicio, Doctor, Horario, Cita, Pago, Usuario };
+ 
