@@ -37,6 +37,27 @@
         </div>
     </div>
  
+    <!-- MODAL REPROGRAMAR -->
+    <div id="modal-reprogramar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:16px; padding:32px; max-width:480px; width:90%; max-height:90vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 style="font-size:18px; font-weight:700; color:#111;">Reprogramar cita</h3>
+                <button onclick="cerrarReprogramar()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#6b7280;">✕</button>
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:14px; font-weight:600; margin-bottom:6px;">Selecciona una nueva fecha</label>
+                <input type="date" id="rep-fecha" onchange="buscarSlots()" style="width:100%; border:1px solid #d1d5db; border-radius:8px; padding:10px 14px; font-size:14px; box-sizing:border-box;">
+            </div>
+            <div id="rep-slots" style="margin-bottom:20px;"></div>
+            <input type="hidden" id="rep-slot-sel">
+            <input type="hidden" id="rep-doctor-sel">
+            <div style="display:flex; gap:12px;">
+                <button onclick="confirmarReprogramar()" class="btn-siguiente" style="flex:1;">Confirmar</button>
+                <button onclick="cerrarReprogramar()" class="btn-atras" style="flex:1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/mis-citas.js"></script>
 </body>
 </html>

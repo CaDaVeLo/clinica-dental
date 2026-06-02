@@ -17,6 +17,8 @@
                 <a href="#" class="sidebar-link activo" onclick="mostrarSeccion('citas', this)">Citas</a>
                 <a href="#" class="sidebar-link" onclick="mostrarSeccion('pacientes', this)">Pacientes</a>
                 <a href="#" class="sidebar-link" onclick="mostrarSeccion('pagos', this)">Pagos</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('estadisticas', this)">Estadísticas</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('mensajes', this)">Mensajes</a>
             </nav>
             <button class="btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar sesión</button>
         </aside>
@@ -49,6 +51,18 @@
             <!-- PAGOS -->
             <div id="seccion-pagos" style="display:none;">
                 <div id="tabla-pagos"></div>
+            </div>
+
+            <!-- MENSAJES DE CONTACTO -->
+            <div id="seccion-mensajes" style="display:none;">
+                <div id="tabla-mensajes"></div>
+            </div>
+
+            <!-- ESTADÍSTICAS -->
+            <div id="seccion-estadisticas" style="display:none;">
+                <div id="contenido-estadisticas">
+                    <p style="color:#888;">Cargando estadísticas...</p>
+                </div>
             </div>
         </main>
     </div>
@@ -96,6 +110,48 @@
         </div>
     </div>
  
+    <!-- MODAL RESPONDER MENSAJE -->
+    <div id="modal-respuesta" class="modal" style="display:none;">
+        <div class="modal-contenido" style="max-width:480px;">
+            <div class="modal-header">
+                <h3>Responder mensaje</h3>
+                <button onclick="cerrarModal('modal-respuesta')" class="modal-cerrar">✕</button>
+            </div>
+            <div id="resp-destinatario" style="font-size:13px; color:#6b7280; margin-bottom:16px;"></div>
+            <div class="campo" style="margin-bottom:16px;">
+                <label>Tu respuesta *</label>
+                <textarea id="resp-texto" style="border:1px solid #ddd; border-radius:8px; padding:10px; width:100%; height:140px; font-family:inherit; font-size:14px; resize:vertical;" placeholder="Escribe aquí tu respuesta al cliente..."></textarea>
+            </div>
+            <div id="resp-error" style="color:red; font-size:13px; display:none; margin-bottom:10px;"></div>
+            <div style="margin-top:4px;">
+                <button class="btn-siguiente" id="btn-enviar-resp" onclick="enviarRespuesta()">Enviar por email</button>
+                <button class="btn-atras" onclick="cerrarModal('modal-respuesta')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DESCUENTO PAGO -->
+    <div id="modal-descuento" class="modal" style="display:none;">
+        <div class="modal-contenido" style="max-width:380px;">
+            <div class="modal-header">
+                <h3>Aplicar descuento</h3>
+                <button onclick="cerrarModal('modal-descuento')" class="modal-cerrar">✕</button>
+            </div>
+            <div class="campo" style="margin-bottom:16px;">
+                <label>Descuento (%)</label>
+                <input type="number" id="desc-porcentaje" min="0" max="100" value="0" style="border:1px solid #ddd; border-radius:8px; padding:10px; width:100%; font-size:14px; box-sizing:border-box;">
+            </div>
+            <div class="campo" style="margin-bottom:16px;">
+                <label>Concepto del descuento</label>
+                <input type="text" id="desc-concepto" placeholder="Ej. Primera visita, convenio..." style="border:1px solid #ddd; border-radius:8px; padding:10px; width:100%; font-size:14px; box-sizing:border-box;">
+            </div>
+            <div style="margin-top:20px;">
+                <button class="btn-siguiente" onclick="confirmarDescuento()">Aplicar</button>
+                <button class="btn-atras" onclick="cerrarModal('modal-descuento')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/panel-recepcionista.js"></script>
 </body>
 </html>

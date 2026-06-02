@@ -19,7 +19,8 @@ const Expediente = sequelize.define('expedientes', {
     enfermedades: { type: DataTypes.TEXT },
     medicamentos: { type: DataTypes.TEXT },
     antecedentes: { type: DataTypes.TEXT },
-    notas_generales: { type: DataTypes.TEXT }
+    notas_generales: { type: DataTypes.TEXT },
+    odontograma: { type: DataTypes.JSON, defaultValue: {} }
 }, { timestamps: true, createdAt: 'creado_en', updatedAt: 'actualizado_en' });
  
 const Servicio = sequelize.define('servicios', {
@@ -69,7 +70,9 @@ const Pago = sequelize.define('pagos', {
     monto: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     metodo: { type: DataTypes.STRING(30) },
     estado: { type: DataTypes.STRING(20), defaultValue: 'pendiente' },
-    referencia: { type: DataTypes.STRING(100) }
+    referencia: { type: DataTypes.STRING(100) },
+    descuento_porcentaje: { type: DataTypes.INTEGER, defaultValue: 0 },
+    descuento_concepto: { type: DataTypes.STRING(100) }
 }, { timestamps: true, createdAt: 'creado_en', updatedAt: false });
  
 const Usuario = sequelize.define('usuarios', {
@@ -81,6 +84,27 @@ const Usuario = sequelize.define('usuarios', {
     doctor_id: { type: DataTypes.INTEGER }
 }, { timestamps: false });
  
+const Mensaje = sequelize.define('mensajes', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    nombre: { type: DataTypes.STRING(100), allowNull: false },
+    email: { type: DataTypes.STRING(150), allowNull: false },
+    telefono: { type: DataTypes.STRING(20) },
+    asunto: { type: DataTypes.STRING(100) },
+    mensaje: { type: DataTypes.TEXT, allowNull: false },
+    leido: { type: DataTypes.BOOLEAN, defaultValue: false }
+}, { timestamps: true, createdAt: 'creado_en', updatedAt: false });
+
+const Presupuesto = sequelize.define('presupuestos', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    paciente_id: { type: DataTypes.INTEGER, allowNull: false },
+    doctor_id: { type: DataTypes.INTEGER },
+    items: { type: DataTypes.JSON, defaultValue: [] },
+    total: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
+    descuento_porcentaje: { type: DataTypes.INTEGER, defaultValue: 0 },
+    estado: { type: DataTypes.STRING(20), defaultValue: 'borrador' },
+    notas: { type: DataTypes.TEXT }
+}, { timestamps: true, createdAt: 'creado_en', updatedAt: 'actualizado_en' });
+
 Doctor.hasMany(Horario, { foreignKey: 'doctor_id' });
 Horario.belongsTo(Doctor, { foreignKey: 'doctor_id' });
  
@@ -98,6 +122,10 @@ Pago.belongsTo(Cita, { foreignKey: 'cita_id' });
  
 Paciente.hasOne(Expediente, { foreignKey: 'paciente_id' });
 Expediente.belongsTo(Paciente, { foreignKey: 'paciente_id' });
- 
-export { sequelize, Paciente, Expediente, Servicio, Doctor, Horario, Cita, Pago, Usuario };
+
+Presupuesto.belongsTo(Paciente, { foreignKey: 'paciente_id' });
+Presupuesto.belongsTo(Doctor, { foreignKey: 'doctor_id' });
+Paciente.hasMany(Presupuesto, { foreignKey: 'paciente_id' });
+
+export { sequelize, Paciente, Expediente, Servicio, Doctor, Horario, Cita, Pago, Usuario, Presupuesto, Mensaje };
  
