@@ -342,7 +342,62 @@ app.post('/citas', async (req, res) => {
         const citaCompleta = await Cita.findByPk(cita.id, {
             include: [{ model: Paciente }, { model: Servicio }, { model: Doctor }, { model: Pago }]
         });
- 
+
+        const emailPaciente = citaCompleta.paciente?.email;
+        if (emailPaciente) {
+            const fechaFormato = new Date(citaCompleta.fecha + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const horaFormato = citaCompleta.hora?.slice(0, 5);
+            const nombrePaciente = citaCompleta.paciente?.nombre;
+            const nombreServicio = citaCompleta.servicio?.nombre;
+            const nombreDoctor = citaCompleta.doctore?.nombre || 'por asignar';
+            const precio = Number(citaCompleta.servicio?.precio || 0).toLocaleString('es-MX');
+
+            transporter.sendMail({
+                from: process.env.EMAIL_FROM,
+                to: emailPaciente,
+                subject: 'Confirmación de cita — Clínica Dental',
+                html: `
+                    <div style="font-family:Arial,sans-serif; max-width:600px; margin:0 auto;">
+                        <div style="background:#2563eb; padding:24px 32px; border-radius:12px 12px 0 0;">
+                            <h2 style="color:white; margin:0; font-size:20px;">Clínica Dental</h2>
+                            <p style="color:#bfdbfe; margin:4px 0 0; font-size:13px;">Confirmación de cita</p>
+                        </div>
+                        <div style="background:#f9fafb; padding:28px 32px; border:1px solid #e5e7eb; border-top:none;">
+                            <p style="color:#374151; font-size:15px; margin-bottom:20px;">Hola <strong>${nombrePaciente}</strong>, tu cita ha sido registrada exitosamente.</p>
+                            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:10px 0; color:#6b7280; width:40%;">Servicio</td>
+                                    <td style="padding:10px 0; color:#111; font-weight:600;">${nombreServicio}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:10px 0; color:#6b7280;">Fecha</td>
+                                    <td style="padding:10px 0; color:#111; font-weight:600;">${fechaFormato}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:10px 0; color:#6b7280;">Hora</td>
+                                    <td style="padding:10px 0; color:#111; font-weight:600;">${horaFormato}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:10px 0; color:#6b7280;">Doctor</td>
+                                    <td style="padding:10px 0; color:#111; font-weight:600;">${nombreDoctor}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; color:#6b7280;">Precio</td>
+                                    <td style="padding:10px 0; color:#2563eb; font-weight:700; font-size:16px;">$${precio} MXN</td>
+                                </tr>
+                            </table>
+                            <div style="margin-top:24px; text-align:center;">
+                                <a href="http://localhost:3000" style="background:#2563eb; color:white; padding:12px 28px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">Ver mis citas</a>
+                            </div>
+                        </div>
+                        <div style="background:#f3f4f6; padding:16px 32px; border-radius:0 0 12px 12px; border:1px solid #e5e7eb; border-top:none;">
+                            <p style="color:#9ca3af; font-size:12px; margin:0; text-align:center;">Clínica Dental &nbsp;·&nbsp; citas@dentalelite.com &nbsp;·&nbsp; +52 (55) 1234-5678</p>
+                        </div>
+                    </div>
+                `
+            }).catch(err => console.error('[EMAIL CITA]', err.message));
+        }
+
         res.status(201).json(citaCompleta);
     } catch (e) {
         res.status(400).json({ error: e.message });
