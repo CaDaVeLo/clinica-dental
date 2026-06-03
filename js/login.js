@@ -1,45 +1,68 @@
 const API = 'http://localhost:3000';
- 
+
+function mostrarError(msg) {
+    const errorDiv = document.getElementById('mensaje-error');
+    const textoError = document.getElementById('texto-error');
+    if (textoError) textoError.textContent = msg;
+    errorDiv.classList.add('visible');
+}
+
+function ocultarError() {
+    document.getElementById('mensaje-error').classList.remove('visible');
+}
+
+function setBtnCargando(activo) {
+    const btn = document.getElementById('btn-entrar');
+    if (!btn) return;
+    if (activo) {
+        btn.classList.add('cargando');
+    } else {
+        btn.classList.remove('cargando');
+    }
+}
+
 async function login() {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    const error = document.getElementById('mensaje-error');
- 
+
+    ocultarError();
+
     if (!email || !password) {
-        error.style.display = 'block';
-        error.textContent = 'Ingresa tu email y contraseña.';
+        mostrarError('Ingresa tu email y contraseña.');
         return;
     }
- 
+
+    setBtnCargando(true);
+
     try {
         const res = await fetch(`${API}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
- 
+
         const data = await res.json();
- 
+
         if (!res.ok) {
-            error.style.display = 'block';
-            error.textContent = data.error || 'Credenciales incorrectas.';
+            mostrarError(data.error || 'Credenciales incorrectas.');
+            setBtnCargando(false);
             return;
         }
- 
+
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
- 
+
         if (data.usuario.rol === 'recepcionista') {
             window.location.href = 'panel-recepcionista.html';
         } else if (data.usuario.rol === 'doctor') {
             window.location.href = 'panel-doctor.html';
         }
     } catch (e) {
-        error.style.display = 'block';
-        error.textContent = 'No se pudo conectar con el servidor.';
+        mostrarError('No se pudo conectar con el servidor.');
+        setBtnCargando(false);
     }
 }
- 
+
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') login();
 });

@@ -3,30 +3,505 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Clínica Dental</title>
+    <title>Acceso Personal - Clínica Dental</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            background: #f0f4ff;
+        }
+
+        /* ── Panel izquierdo decorativo ── */
+        .login-left {
+            flex: 1;
+            background: linear-gradient(145deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-left::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
+        }
+
+        .login-left::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            bottom: -80px;
+            left: -80px;
+        }
+
+        .left-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            color: #fff;
+            max-width: 380px;
+        }
+
+        .left-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 48px;
+        }
+
+        .left-logo-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .left-logo-icon img {
+            width: 28px;
+            height: 28px;
+            display: block;
+        }
+
+        .left-logo span {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .left-content h1 {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .left-content p {
+            font-size: 15px;
+            opacity: 0.8;
+            line-height: 1.7;
+            margin-bottom: 48px;
+        }
+
+        .features-list {
+            list-style: none;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .feature-dot {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .feature-dot img {
+            width: 20px;
+            height: 20px;
+            display: block;
+        }
+
+        /* ── Panel derecho con el formulario ── */
+        .login-right {
+            width: 480px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #fff;
+            padding: 60px 52px;
+            position: relative;
+            box-shadow: -20px 0 60px rgba(0,0,0,0.06);
+        }
+
+        /* ── Botón volver a inicio ── */
+        .btn-volver {
+            position: absolute;
+            top: 28px;
+            left: 28px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: background 0.2s, color 0.2s;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-volver:hover {
+            background: #f3f4f6;
+            color: #1a1a1a;
+            border-color: #d1d5db;
+        }
+
+        .btn-volver svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* ── Cabecera del formulario ── */
+        .form-header {
+            margin-bottom: 36px;
+        }
+
+        .form-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff;
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin-bottom: 18px;
+            letter-spacing: 0.3px;
+        }
+
+        .form-header h2 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* ── Alerta de error ── */
+        .alerta-error {
+            display: none;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            font-size: 13px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alerta-error.visible {
+            display: flex;
+        }
+
+        /* ── Campos del formulario ── */
+        .campo-grupo {
+            margin-bottom: 20px;
+        }
+
+        .campo-grupo label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 7px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            width: 17px;
+            height: 17px;
+            pointer-events: none;
+        }
+
+        .campo-grupo input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #0f172a;
+            background: #f9fafb;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .campo-grupo input::placeholder {
+            color: #b0b8c4;
+        }
+
+        .campo-grupo input:focus {
+            border-color: #2563eb;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        /* ── Botón principal ── */
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+            box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37,99,235,0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login.cargando {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        .btn-login.cargando .spinner {
+            display: block;
+        }
+
+        .btn-login.cargando .btn-texto {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Divisor ── */
+        .divisor {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 28px 0 22px;
+            color: #d1d5db;
+            font-size: 12px;
+        }
+
+        .divisor::before,
+        .divisor::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        /* ── Nota de ayuda ── */
+        .nota-ayuda {
+            text-align: center;
+            font-size: 12.5px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .nota-ayuda a {
+            color: #2563eb;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .nota-ayuda a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 860px) {
+            .login-left {
+                display: none;
+            }
+
+            .login-right {
+                width: 100%;
+                padding: 60px 32px 40px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .login-right {
+                padding: 56px 24px 36px;
+            }
+        }
+    </style>
 </head>
-<body style="background:#f3f4f6; display:flex; align-items:center; justify-content:center; min-height:100vh;">
- 
-    <div style="background:#fff; border-radius:16px; padding:40px; width:100%; max-width:420px; border:1px solid #e5e7eb;">
-        <h2 style="font-size:24px; font-weight:700; margin-bottom:6px;">Iniciar sesión</h2>
-        <p style="color:#666; font-size:14px; margin-bottom:28px;">Accede a tu panel de trabajo</p>
- 
-        <div id="mensaje-error" style="color:red; margin-bottom:14px; display:none; font-size:14px;"></div>
- 
-        <div class="campo" style="margin-bottom:14px;">
-            <label>Correo electrónico</label>
-            <input type="email" id="email" placeholder="correo@clinica.com">
+<body>
+
+    <!-- ── Panel izquierdo ── -->
+    <div class="login-left">
+        <div class="left-content">
+            <div class="left-logo">
+                <div class="left-logo-icon">
+                    <img src="https://api.iconify.design/healthicons/tooth.svg?color=white" alt="Clínica Dental">
+                </div>
+                <span>Clínica Dental</span>
+            </div>
+            <h1>Bienvenido al portal de trabajo</h1>
+            <p>Gestiona citas, pacientes y mucho más desde un solo lugar, de forma rápida y segura.</p>
+            <ul class="features-list">
+                <li>
+                    <div class="feature-dot">
+                        <img src="https://api.iconify.design/mdi/calendar-check.svg?color=white" alt="Citas">
+                    </div>
+                    Administración de citas en tiempo real
+                </li>
+                <li>
+                    <div class="feature-dot">
+                        <img src="https://api.iconify.design/mdi/account-group.svg?color=white" alt="Pacientes">
+                    </div>
+                    Gestión completa de pacientes
+                </li>
+                <li>
+                    <div class="feature-dot">
+                        <img src="https://api.iconify.design/mdi/clipboard-pulse.svg?color=white" alt="Historial">
+                    </div>
+                    Historial clínico y registros
+                </li>
+                <li>
+                    <div class="feature-dot">
+                        <img src="https://api.iconify.design/mdi/shield-lock.svg?color=white" alt="Seguridad">
+                    </div>
+                    Acceso seguro con cifrado de datos
+                </li>
+            </ul>
         </div>
- 
-        <div class="campo" style="margin-bottom:24px;">
-            <label>Contraseña</label>
-            <input type="password" id="password" placeholder="••••••••">
-        </div>
- 
-        <button class="btn-siguiente" style="width:100%; text-align:center;" onclick="login()">Entrar</button>
     </div>
- 
+
+    <!-- ── Panel derecho ── -->
+    <div class="login-right">
+
+        <!-- Botón volver -->
+        <a href="index.html" class="btn-volver">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Volver al inicio
+        </a>
+
+        <!-- Cabecera -->
+        <div class="form-header">
+            <div class="form-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                Acceso seguro
+            </div>
+            <h2>Iniciar sesión</h2>
+            <p>Ingresa tus credenciales para acceder a tu panel de trabajo.</p>
+        </div>
+
+        <!-- Alerta de error -->
+        <div id="mensaje-error" class="alerta-error">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="texto-error">Correo o contraseña incorrectos.</span>
+        </div>
+
+        <!-- Formulario -->
+        <form id="form-login" onsubmit="return false;">
+            <div class="campo-grupo">
+                <label for="email">Correo electrónico</label>
+                <div class="input-wrapper">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    <input type="email" id="email" placeholder="correo@clinica.com" autocomplete="email" required>
+                </div>
+            </div>
+
+            <div class="campo-grupo">
+                <label for="password">Contraseña</label>
+                <div class="input-wrapper">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+            </div>
+
+            <button type="button" class="btn-login" id="btn-entrar" onclick="login()">
+                <div class="spinner"></div>
+                <span class="btn-texto">Entrar al panel</span>
+                <svg class="btn-texto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </button>
+        </form>
+
+        <div class="divisor">Solo para personal autorizado</div>
+
+        <p class="nota-ayuda">
+            ¿Problemas para ingresar?<br>
+            Contacta a tu administrador o escríbenos a <a href="mailto:contacto@clinicadental.com">contacto@clinicadental.com</a>
+        </p>
+
+    </div>
+
     <script src="js/login.js"></script>
 </body>
 </html>
