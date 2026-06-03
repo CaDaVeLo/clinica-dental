@@ -9,8 +9,11 @@
 </head>
 <body>
  
+    <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menú">&#9776;</button>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <div class="panel-layout">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">Clínica Dental</div>
             <p class="sidebar-rol">Recepcionista</p>
             <nav class="sidebar-nav">
@@ -40,7 +43,7 @@
                         Mostrando: <span id="badge-fecha"></span>
                     </span>
                 </div>
-                <div id="tabla-citas"></div>
+                <div id="tabla-citas" class="tabla-wrap"></div>
             </div>
  
             <!-- PACIENTES -->
@@ -49,17 +52,17 @@
                     <input type="text" id="buscar-paciente" placeholder="Buscar por nombre, email o CURP..." style="border:1px solid #ddd; border-radius:8px; padding:10px 14px; width:320px; font-size:14px;" oninput="filtrarPacientes()">
                     <button class="btn-siguiente" style="padding:10px 20px;" onclick="abrirModalPaciente()">+ Nuevo paciente</button>
                 </div>
-                <div id="tabla-pacientes"></div>
+                <div id="tabla-pacientes" class="tabla-wrap"></div>
             </div>
  
             <!-- PAGOS -->
             <div id="seccion-pagos" style="display:none;">
-                <div id="tabla-pagos"></div>
+                <div id="tabla-pagos" class="tabla-wrap"></div>
             </div>
 
             <!-- MENSAJES DE CONTACTO -->
             <div id="seccion-mensajes" style="display:none;">
-                <div id="tabla-mensajes"></div>
+                <div id="tabla-mensajes" class="tabla-wrap"></div>
             </div>
 
             <!-- RESEÑAS -->
@@ -162,5 +165,18 @@
     </div>
 
     <script src="js/panel-recepcionista.js"></script>
+    <script>
+        (function() {
+            var toggle = document.getElementById('sidebar-toggle');
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebar-overlay');
+            if (!toggle || !sidebar || !overlay) return;
+            toggle.addEventListener('click', function() { sidebar.classList.toggle('abierto'); overlay.classList.toggle('visible'); });
+            overlay.addEventListener('click', function() { sidebar.classList.remove('abierto'); overlay.classList.remove('visible'); });
+            document.querySelectorAll('.sidebar-link').forEach(function(l) {
+                l.addEventListener('click', function() { if (window.innerWidth <= 820) { sidebar.classList.remove('abierto'); overlay.classList.remove('visible'); } });
+            });
+        })();
+    </script>
 </body>
 </html>

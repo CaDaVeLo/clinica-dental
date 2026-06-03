@@ -9,8 +9,11 @@
 </head>
 <body>
  
+    <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menú">&#9776;</button>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <div class="panel-layout">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">Clínica Dental</div>
             <p class="sidebar-rol">Doctor</p>
             <nav class="sidebar-nav">
@@ -34,7 +37,7 @@
  
             <!-- HORARIO -->
             <div id="seccion-horario" style="display:none;">
-                <div id="tabla-horario"></div>
+                <div id="tabla-horario" class="tabla-wrap"></div>
             </div>
 
             <!-- PRESUPUESTOS -->
@@ -159,5 +162,18 @@
     </div>
 
     <script src="js/panel-doctor.js"></script>
+    <script>
+        (function() {
+            var toggle = document.getElementById('sidebar-toggle');
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebar-overlay');
+            if (!toggle || !sidebar || !overlay) return;
+            toggle.addEventListener('click', function() { sidebar.classList.toggle('abierto'); overlay.classList.toggle('visible'); });
+            overlay.addEventListener('click', function() { sidebar.classList.remove('abierto'); overlay.classList.remove('visible'); });
+            document.querySelectorAll('.sidebar-link').forEach(function(l) {
+                l.addEventListener('click', function() { if (window.innerWidth <= 820) { sidebar.classList.remove('abierto'); overlay.classList.remove('visible'); } });
+            });
+        })();
+    </script>
 </body>
 </html>
