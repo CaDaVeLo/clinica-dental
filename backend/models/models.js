@@ -94,6 +94,14 @@ const Mensaje = sequelize.define('mensajes', {
     leido: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, { timestamps: true, createdAt: 'creado_en', updatedAt: false });
 
+const Resena = sequelize.define('resenas', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    cita_id: { type: DataTypes.INTEGER, allowNull: false, unique: true },
+    paciente_id: { type: DataTypes.INTEGER, allowNull: false },
+    estrellas: { type: DataTypes.INTEGER, allowNull: false },
+    comentario: { type: DataTypes.TEXT }
+}, { timestamps: true, createdAt: 'creado_en', updatedAt: false });
+
 const Presupuesto = sequelize.define('presupuestos', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     paciente_id: { type: DataTypes.INTEGER, allowNull: false },
@@ -127,5 +135,9 @@ Presupuesto.belongsTo(Paciente, { foreignKey: 'paciente_id' });
 Presupuesto.belongsTo(Doctor, { foreignKey: 'doctor_id' });
 Paciente.hasMany(Presupuesto, { foreignKey: 'paciente_id' });
 
-export { sequelize, Paciente, Expediente, Servicio, Doctor, Horario, Cita, Pago, Usuario, Presupuesto, Mensaje };
+Resena.belongsTo(Cita, { foreignKey: 'cita_id' });
+Resena.belongsTo(Paciente, { foreignKey: 'paciente_id' });
+Cita.hasOne(Resena, { foreignKey: 'cita_id' });
+
+export { sequelize, Paciente, Expediente, Servicio, Doctor, Horario, Cita, Pago, Usuario, Presupuesto, Mensaje, Resena };
  

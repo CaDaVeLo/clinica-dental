@@ -5,7 +5,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Op } from 'sequelize';
 import nodemailer from 'nodemailer';
-import { sequelize, Paciente, Expediente, Servicio, Doctor, Horario, Cita, Pago, Usuario, Presupuesto, Mensaje } from './models/models.js';
+import rateLimit from 'express-rate-limit';
+import { sequelize, Paciente, Expediente, Servicio, Doctor, Horario, Cita, Pago, Usuario, Presupuesto, Mensaje, Resena } from './models/models.js';
  
 dotenv.config();
  
@@ -14,6 +15,14 @@ app.use(cors());
 app.use(express.json());
  
 const SECRET = process.env.JWT_SECRET || 'clinica_secret_2024';
+
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'Demasiados intentos fallidos. Intenta de nuevo en 15 minutos.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -46,7 +55,7 @@ function soloRol(...roles) {
  
 // ---------- AUTH ----------
  
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
         const usuario = await Usuario.findOne({ where: { email } });
@@ -67,7 +76,7 @@ app.post('/login', async (req, res) => {
     }
 });
  
-app.post('/usuarios', async (req, res) => {
+app.post('/usuarios', verificarToken, soloRol('recepcionista'), async (req, res) => {
     try {
         const { nombre, email, password, rol, doctor_id } = req.body;
         const hash = await bcrypt.hash(password, 10);
@@ -80,7 +89,7 @@ app.post('/usuarios', async (req, res) => {
  
 // ---------- PACIENTES ----------
  
-app.get('/pacientes', async (req, res) => {
+app.get('/pacientes', verificarToken, async (req, res) => {
     try {
         const pacientes = await Paciente.findAll({ where: { activo: true } });
         res.json(pacientes);
@@ -89,7 +98,7 @@ app.get('/pacientes', async (req, res) => {
     }
 });
  
-app.get('/pacientes/:id', async (req, res) => {
+app.get('/pacientes/:id', verificarToken, async (req, res) => {
     try {
         const paciente = await Paciente.findByPk(req.params.id, {
             include: [{ model: Expediente }]
@@ -111,7 +120,7 @@ app.get('/pacientes/buscar/:query', async (req, res) => {
  
         const citas = await Cita.findAll({
             where: { paciente_id: paciente.id },
-            include: [{ model: Servicio }, { model: Doctor }]
+            include: [{ model: Servicio }, { model: Doctor }, { model: Resena }]
         });
  
         res.json({ paciente, citas });
@@ -133,7 +142,8 @@ app.put('/pacientes/:id', verificarToken, async (req, res) => {
     try {
         const paciente = await Paciente.findByPk(req.params.id);
         if (!paciente) return res.status(404).json({ error: 'Paciente no encontrado' });
-        await paciente.update(req.body);
+        const { nombre, email, telefono, fecha_nac, direccion } = req.body;
+        await paciente.update({ nombre, email, telefono, fecha_nac, direccion });
         res.json(paciente);
     } catch (e) {
         res.status(400).json({ error: e.message });
@@ -415,12 +425,13 @@ app.put('/pagos/:id', verificarToken, async (req, res) => {
             include: [{ model: Cita, include: [{ model: Servicio }] }]
         });
         if (!pago) return res.status(404).json({ error: 'Pago no encontrado' });
-        const body = { ...req.body };
-        if (body.descuento_porcentaje !== undefined && body.descuento_porcentaje > 0) {
+        const { estado, metodo, referencia, descuento_porcentaje, descuento_concepto } = req.body;
+        const campos = { estado, metodo, referencia, descuento_porcentaje, descuento_concepto };
+        if (descuento_porcentaje > 0) {
             const precioBase = Number(pago.cita?.servicio?.precio || pago.monto);
-            body.monto = precioBase * (1 - body.descuento_porcentaje / 100);
+            campos.monto = precioBase * (1 - descuento_porcentaje / 100);
         }
-        await pago.update(body);
+        await pago.update(campos);
         res.json(pago);
     } catch (e) {
         res.status(400).json({ error: e.message });
@@ -638,6 +649,44 @@ app.post('/mensajes/:id/responder', verificarToken, soloRol('recepcionista'), as
         res.json({ ok: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
+    }
+});
+
+// ---------- RESEÑAS ----------
+
+app.get('/resenas', async (req, res) => {
+    try {
+        const resenas = await Resena.findAll({
+            include: [
+                { model: Paciente, attributes: ['nombre'] },
+                { model: Cita, include: [{ model: Servicio, attributes: ['nombre'] }] }
+            ],
+            order: [['creado_en', 'DESC']]
+        });
+        res.json(resenas);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/resenas', async (req, res) => {
+    try {
+        const { cita_id, estrellas, comentario } = req.body;
+
+        if (!cita_id || !estrellas) return res.status(400).json({ error: 'Faltan datos obligatorios.' });
+        if (estrellas < 1 || estrellas > 5) return res.status(400).json({ error: 'Las estrellas deben ser entre 1 y 5.' });
+
+        const cita = await Cita.findByPk(cita_id);
+        if (!cita) return res.status(404).json({ error: 'Cita no encontrada.' });
+        if (cita.estado !== 'completada') return res.status(400).json({ error: 'Solo puedes reseñar citas completadas.' });
+
+        const yaExiste = await Resena.findOne({ where: { cita_id } });
+        if (yaExiste) return res.status(409).json({ error: 'Ya dejaste una reseña para esta cita.' });
+
+        const resena = await Resena.create({ cita_id, paciente_id: cita.paciente_id, estrellas, comentario });
+        res.status(201).json(resena);
+    } catch (e) {
+        res.status(400).json({ error: e.message });
     }
 });
 

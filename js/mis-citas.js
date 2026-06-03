@@ -1,5 +1,16 @@
 const API = 'http://localhost:3000';
 let citaActual = null;
+let citaResenaId = null;
+
+function esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 async function buscar() {
     const query = document.getElementById('input-buscar').value.trim();
@@ -11,6 +22,7 @@ async function buscar() {
     }
 
     resultado.innerHTML = '<p>Buscando...</p>';
+    document.getElementById('info-pasos').style.display = 'none';
 
     try {
         const res = await fetch(`${API}/pacientes/buscar/${encodeURIComponent(query)}`);
@@ -31,22 +43,31 @@ async function buscar() {
         resultado.innerHTML = `<p class="conteo-citas">${citas.length} cita(s) encontrada(s)</p>` +
             citas.map(c => {
                 const puedeCancelar = puedeModificar(c.fecha, c.hora);
-                const cancelada = ['cancelada', 'completada'].includes(c.estado);
+                const cancelada = c.estado === 'cancelada';
+                const completada = c.estado === 'completada';
+                const tieneResena = !!c.resena;
                 return `
                 <div class="cita-card" id="cita-${c.id}">
                     <div class="cita-header">
-                        <h3>${c.servicio?.nombre || 'Servicio'}</h3>
-                        <span class="badge ${c.estado === 'confirmada' ? 'confirmada' : c.estado === 'cancelada' ? 'cancelada' : 'pendiente'}">${c.estado}</span>
+                        <h3>${esc(c.servicio?.nombre) || 'Servicio'}</h3>
+                        <span class="badge ${c.estado === 'confirmada' ? 'confirmada' : c.estado === 'cancelada' ? 'cancelada' : 'pendiente'}">${esc(c.estado)}</span>
                     </div>
                     <p class="cita-info">
-                        ${c.fecha} &nbsp; ${c.hora?.slice(0, 5)} &nbsp;
-                        ${c.doctore?.nombre || ''} &nbsp;
+                        ${esc(c.fecha)} &nbsp; ${esc(c.hora?.slice(0, 5))} &nbsp;
+                        ${esc(c.doctore?.nombre)} &nbsp;
                         $${Number(c.servicio?.precio || 0).toLocaleString()} MXN
                     </p>
-                    ${!cancelada ? `
+                    ${!cancelada && !completada ? `
                     <div class="cita-acciones">
                         <button class="btn-reprogramar" onclick="abrirReprogramar(${c.id}, '${c.fecha}', '${c.hora}', ${c.servicio_id})" ${!puedeCancelar ? 'disabled title="Menos de 2 horas para la cita"' : ''}>Reprogramar</button>
                         <button class="btn-cancelar" onclick="cancelar(${c.id}, '${c.fecha}', '${c.hora}')" ${!puedeCancelar ? 'disabled title="Menos de 2 horas para la cita"' : ''}>Cancelar</button>
+                    </div>` : ''}
+                    ${completada ? `
+                    <div class="cita-acciones">
+                        ${tieneResena
+                            ? `<span class="resena-enviada">&#10003; Reseña enviada — ${'★'.repeat(c.resena.estrellas)}${'☆'.repeat(5 - c.resena.estrellas)}</span>`
+                            : `<button class="btn-resena" onclick="abrirResena(${c.id}, '${esc(c.servicio?.nombre)}')">Dejar reseña</button>`
+                        }
                     </div>` : ''}
                 </div>
             `}).join('');
@@ -174,6 +195,61 @@ async function confirmarReprogramar() {
 function cerrarReprogramar() {
     document.getElementById('modal-reprogramar').style.display = 'none';
     citaActual = null;
+}
+
+function abrirResena(citaId, servicioNombre) {
+    citaResenaId = citaId;
+    document.getElementById('resena-servicio-nombre').textContent = servicioNombre;
+    document.querySelectorAll('#estrellas-input input').forEach(r => r.checked = false);
+    document.getElementById('resena-comentario').value = '';
+    document.getElementById('resena-error').style.display = 'none';
+    document.getElementById('modal-resena').style.display = 'flex';
+}
+
+function cerrarResena() {
+    document.getElementById('modal-resena').style.display = 'none';
+    citaResenaId = null;
+}
+
+async function enviarResena() {
+    const estrellas = document.querySelector('#estrellas-input input:checked')?.value;
+    const comentario = document.getElementById('resena-comentario').value.trim();
+    const errDiv = document.getElementById('resena-error');
+    errDiv.style.display = 'none';
+
+    if (!estrellas) {
+        errDiv.style.display = 'block';
+        errDiv.textContent = 'Selecciona una calificación.';
+        return;
+    }
+
+    const btn = document.getElementById('btn-enviar-resena');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+        const res = await fetch(`${API}/resenas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cita_id: citaResenaId, estrellas: parseInt(estrellas), comentario })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            errDiv.style.display = 'block';
+            errDiv.textContent = data.error || 'Error al enviar la reseña.';
+            return;
+        }
+
+        cerrarResena();
+        buscar();
+    } catch (e) {
+        errDiv.style.display = 'block';
+        errDiv.textContent = 'Error al conectar con el servidor.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar reseña';
+    }
 }
 
 document.getElementById('input-buscar').addEventListener('keydown', function(e) {

@@ -3,6 +3,16 @@ const token = localStorage.getItem('token');
 const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 let citaNotasId = null;
 let pacienteExpedienteId = null;
+
+function esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
  
 if (!token) window.location.href = 'login.html';
  
@@ -49,16 +59,16 @@ async function cargarCitasHoy() {
         contenedor.innerHTML = citas.map(c => `
             <div class="cita-card">
                 <div class="cita-header">
-                    <h3>${c.paciente?.nombre || 'Paciente'}</h3>
-                    <span class="badge ${c.estado === 'confirmada' ? 'confirmada' : 'pendiente'}">${c.estado}</span>
+                    <h3>${esc(c.paciente?.nombre) || 'Paciente'}</h3>
+                    <span class="badge ${c.estado === 'confirmada' ? 'confirmada' : 'pendiente'}">${esc(c.estado)}</span>
                 </div>
                 <p class="cita-info">
-                    ${c.hora?.slice(0,5)} &nbsp;·&nbsp; ${c.servicio?.nombre || '-'} &nbsp;·&nbsp; $${Number(c.servicio?.precio || 0).toLocaleString()} MXN
+                    ${esc(c.hora?.slice(0,5))} &nbsp;·&nbsp; ${esc(c.servicio?.nombre)} &nbsp;·&nbsp; $${Number(c.servicio?.precio || 0).toLocaleString()} MXN
                 </p>
-                ${c.notas ? `<p style="font-size:13px; color:#555; margin-bottom:10px; background:#f9fafb; padding:8px 12px; border-radius:6px;">${c.notas}</p>` : ''}
+                ${c.notas ? `<p style="font-size:13px; color:#555; margin-bottom:10px; background:#f9fafb; padding:8px 12px; border-radius:6px;">${esc(c.notas)}</p>` : ''}
                 <div class="cita-acciones">
-                    <button class="btn-reprogramar" onclick="abrirExpediente(${c.paciente_id}, '${c.paciente?.nombre}')">Ver expediente</button>
-                    <button class="btn-reprogramar" onclick="abrirNotas(${c.id}, '${(c.notas || '').replace(/'/g, "\\'")}')">Agregar notas</button>
+                    <button class="btn-reprogramar" onclick="abrirExpediente(${c.paciente_id}, '${esc(c.paciente?.nombre).replace(/'/g, '&#39;')}')">Ver expediente</button>
+                    <button class="btn-reprogramar" onclick="abrirNotas(${c.id})">Agregar notas</button>
                 </div>
             </div>
         `).join('');
@@ -158,9 +168,16 @@ async function guardarExpediente() {
     }
 }
  
-function abrirNotas(cita_id, notas) {
+async function abrirNotas(cita_id) {
     citaNotasId = cita_id;
-    document.getElementById('notas-cita').value = notas;
+    document.getElementById('notas-cita').value = '';
+    try {
+        const res = await fetch(`${API}/citas/${cita_id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+            const cita = await res.json();
+            document.getElementById('notas-cita').value = cita.notas || '';
+        }
+    } catch (e) {}
     document.getElementById('modal-notas').style.display = 'flex';
 }
  
@@ -271,11 +288,11 @@ async function cargarPresupuestos() {
                 <tbody>
                     ${lista.map(p => `
                         <tr>
-                            <td>${p.paciente?.nombre || '-'}</td>
+                            <td>${esc(p.paciente?.nombre)}</td>
                             <td>$${Number(p.total).toLocaleString()} MXN</td>
-                            <td>${p.descuento_porcentaje > 0 ? p.descuento_porcentaje + '%' : '-'}</td>
-                            <td><span class="badge ${badgeEstado(p.estado)}">${p.estado}</span></td>
-                            <td>${p.creado_en?.slice(0,10) || '-'}</td>
+                            <td>${p.descuento_porcentaje > 0 ? esc(p.descuento_porcentaje) + '%' : '-'}</td>
+                            <td><span class="badge ${badgeEstado(p.estado)}">${esc(p.estado)}</span></td>
+                            <td>${esc(p.creado_en?.slice(0,10))}</td>
                             <td>
                                 <button class="btn-tabla" onclick="cambiarEstadoPresupuesto(${p.id}, 'aceptado')">Aceptado</button>
                                 <button class="btn-tabla" onclick="cambiarEstadoPresupuesto(${p.id}, 'rechazado')">Rechazado</button>

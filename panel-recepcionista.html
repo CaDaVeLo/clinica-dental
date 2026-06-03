@@ -19,6 +19,7 @@
                 <a href="#" class="sidebar-link" onclick="mostrarSeccion('pagos', this)">Pagos</a>
                 <a href="#" class="sidebar-link" onclick="mostrarSeccion('estadisticas', this)">Estadísticas</a>
                 <a href="#" class="sidebar-link" onclick="mostrarSeccion('mensajes', this)">Mensajes</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('resenas', this)">Reseñas</a>
             </nav>
             <button class="btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar sesión</button>
         </aside>
@@ -31,10 +32,13 @@
  
             <!-- CITAS -->
             <div id="seccion-citas">
-                <div style="display:flex; gap:12px; margin-bottom:20px; align-items:center;">
-                    <input type="date" id="filtro-fecha" class="input-fecha" onchange="cargarCitas()">
-                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="cargarCitas()">Filtrar</button>
-                    <button class="btn-outline-azul" onclick="limpiarFiltro()">Ver todas</button>
+                <div style="display:flex; gap:12px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
+                    <input type="date" id="filtro-fecha" class="input-fecha" style="height:40px; box-sizing:border-box;">
+                    <button class="btn-siguiente" style="height:40px; padding:0 20px; font-size:14px; box-sizing:border-box; margin-top:0;" onclick="aplicarFiltro()">Filtrar por fecha</button>
+                    <button class="btn-outline-azul" style="height:40px; padding:0 20px; font-size:14px; box-sizing:border-box;" onclick="limpiarFiltro()">Ver todas</button>
+                    <span id="badge-filtro" style="display:none; background:#dbeafe; color:#1d4ed8; font-size:13px; font-weight:600; padding:6px 12px; border-radius:20px;">
+                        Mostrando: <span id="badge-fecha"></span>
+                    </span>
                 </div>
                 <div id="tabla-citas"></div>
             </div>
@@ -56,6 +60,11 @@
             <!-- MENSAJES DE CONTACTO -->
             <div id="seccion-mensajes" style="display:none;">
                 <div id="tabla-mensajes"></div>
+            </div>
+
+            <!-- RESEÑAS -->
+            <div id="seccion-resenas" style="display:none;">
+                <div id="contenido-resenas"><p style="color:#888;">Cargando reseñas...</p></div>
             </div>
 
             <!-- ESTADÍSTICAS -->

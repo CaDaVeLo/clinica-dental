@@ -3,6 +3,16 @@ const token = localStorage.getItem('token');
 const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 let citaSeleccionadaId = null;
 let todosPacientes = [];
+
+function esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
  
 if (!token) window.location.href = 'login.html';
  
@@ -18,12 +28,12 @@ function mostrarSeccion(seccion, link) {
     document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('activo'));
     link.classList.add('activo');
 
-    ['citas', 'pacientes', 'pagos', 'estadisticas', 'mensajes'].forEach(s => {
+    ['citas', 'pacientes', 'pagos', 'estadisticas', 'mensajes', 'resenas'].forEach(s => {
         const el = document.getElementById(`seccion-${s}`);
         if (el) el.style.display = 'none';
     });
 
-    const titulos = { citas: 'Citas', pacientes: 'Pacientes', pagos: 'Pagos', estadisticas: 'Estadísticas', mensajes: 'Mensajes de contacto' };
+    const titulos = { citas: 'Citas', pacientes: 'Pacientes', pagos: 'Pagos', estadisticas: 'Estadísticas', mensajes: 'Mensajes de contacto', resenas: 'Reseñas de pacientes' };
     document.getElementById('titulo-seccion').textContent = titulos[seccion] || seccion;
     document.getElementById(`seccion-${seccion}`).style.display = 'block';
 
@@ -32,19 +42,40 @@ function mostrarSeccion(seccion, link) {
     if (seccion === 'pagos') cargarPagos();
     if (seccion === 'estadisticas') cargarEstadisticas();
     if (seccion === 'mensajes') cargarMensajes();
+    if (seccion === 'resenas') cargarResenas();
 }
  
-async function cargarCitas() {
+function aplicarFiltro() {
     const fecha = document.getElementById('filtro-fecha').value;
+    if (!fecha) {
+        alert('Selecciona una fecha para filtrar.');
+        return;
+    }
+    const [anio, mes, dia] = fecha.split('-');
+    document.getElementById('badge-fecha').textContent = `${dia}/${mes}/${anio}`;
+    document.getElementById('badge-filtro').style.display = 'inline-flex';
+    cargarCitas(fecha);
+}
+
+function limpiarFiltro() {
+    document.getElementById('filtro-fecha').value = '';
+    document.getElementById('badge-filtro').style.display = 'none';
+    cargarCitas('');
+}
+
+async function cargarCitas(fechaParam) {
+    const fecha = fechaParam !== undefined ? fechaParam : document.getElementById('filtro-fecha').value;
     const url = fecha ? `${API}/citas?fecha=${fecha}` : `${API}/citas`;
- 
+
     try {
         const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
         const citas = await res.json();
         const contenedor = document.getElementById('tabla-citas');
- 
+
         if (!citas.length) {
-            contenedor.innerHTML = '<p style="color:#888;">No hay citas.</p>';
+            contenedor.innerHTML = fecha
+                ? `<p style="color:#888;">No hay citas para el ${document.getElementById('badge-fecha').textContent}.</p>`
+                : '<p style="color:#888;">No hay citas.</p>';
             return;
         }
  
@@ -65,12 +96,12 @@ async function cargarCitas() {
                 <tbody>
                     ${citas.map(c => `
                         <tr>
-                            <td>${c.paciente?.nombre || '-'}</td>
-                            <td>${c.servicio?.nombre || '-'}</td>
-                            <td>${c.doctore?.nombre || '-'}</td>
-                            <td>${c.fecha}</td>
-                            <td>${c.hora?.slice(0,5)}</td>
-                            <td><span class="badge ${c.estado === 'confirmada' ? 'confirmada' : c.estado === 'cancelada' ? 'cancelada' : 'pendiente'}">${c.estado}</span></td>
+                            <td>${esc(c.paciente?.nombre)}</td>
+                            <td>${esc(c.servicio?.nombre)}</td>
+                            <td>${esc(c.doctore?.nombre)}</td>
+                            <td>${esc(c.fecha)}</td>
+                            <td>${esc(c.hora?.slice(0,5))}</td>
+                            <td><span class="badge ${c.estado === 'confirmada' ? 'confirmada' : c.estado === 'cancelada' ? 'cancelada' : 'pendiente'}">${esc(c.estado)}</span></td>
                             <td>$${Number(c.pago?.monto || 0).toLocaleString()}</td>
                             <td>
                                 <button class="btn-tabla" onclick="abrirModalEstado(${c.id})">Estado</button>
@@ -83,11 +114,6 @@ async function cargarCitas() {
     } catch (e) {
         document.getElementById('tabla-citas').innerHTML = '<p style="color:red;">Error al cargar citas.</p>';
     }
-}
- 
-function limpiarFiltro() {
-    document.getElementById('filtro-fecha').value = '';
-    cargarCitas();
 }
  
 function abrirModalEstado(id) {
@@ -139,11 +165,11 @@ function renderPacientes(pacientes) {
             <tbody>
                 ${pacientes.map(p => `
                     <tr>
-                        <td>${p.nombre}</td>
-                        <td>${p.email}</td>
-                        <td>${p.telefono || '-'}</td>
-                        <td>${p.curp}</td>
-                        <td>${p.fecha_nac || '-'}</td>
+                        <td>${esc(p.nombre)}</td>
+                        <td>${esc(p.email)}</td>
+                        <td>${esc(p.telefono)}</td>
+                        <td>${esc(p.curp)}</td>
+                        <td>${esc(p.fecha_nac)}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -230,13 +256,13 @@ async function cargarPagos() {
                 <tbody>
                     ${pagos.map(p => `
                         <tr>
-                            <td>${p.cita?.paciente?.nombre || '-'}</td>
-                            <td>${p.cita?.servicio?.nombre || '-'}</td>
+                            <td>${esc(p.cita?.paciente?.nombre)}</td>
+                            <td>${esc(p.cita?.servicio?.nombre)}</td>
                             <td>$${Number(p.monto).toLocaleString()} MXN</td>
-                            <td>${p.descuento_porcentaje > 0 ? p.descuento_porcentaje + '% — ' + (p.descuento_concepto || '') : '-'}</td>
-                            <td>${p.metodo || '-'}</td>
-                            <td><span class="badge ${p.estado === 'pagado' ? 'confirmada' : 'pendiente'}">${p.estado}</span></td>
-                            <td>${p.creado_en?.slice(0,10) || '-'}</td>
+                            <td>${p.descuento_porcentaje > 0 ? esc(p.descuento_porcentaje) + '% — ' + esc(p.descuento_concepto) : '-'}</td>
+                            <td>${esc(p.metodo)}</td>
+                            <td><span class="badge ${p.estado === 'pagado' ? 'confirmada' : 'pendiente'}">${esc(p.estado)}</span></td>
+                            <td>${esc(p.creado_en?.slice(0,10))}</td>
                             <td>
                                 <button class="btn-tabla" onclick="abrirDescuento(${p.id})">Descuento</button>
                                 ${p.estado !== 'pagado' ? '<button class="btn-tabla" onclick="marcarPagado(' + p.id + ')">Marcar pagado</button>' : ''}
@@ -371,14 +397,14 @@ async function cargarMensajes() {
                 <tbody>
                     ${mensajes.map(m => `
                         <tr style="${m.leido ? '' : 'font-weight:600; background:#eff6ff;'}">
-                            <td>${m.nombre}</td>
-                            <td>${m.email}</td>
-                            <td>${m.telefono || '-'}</td>
-                            <td>${m.asunto || '-'}</td>
-                            <td style="max-width:220px; white-space:pre-wrap; word-break:break-word;">${m.mensaje}</td>
-                            <td>${m.creado_en?.slice(0, 10) || '-'}</td>
+                            <td>${esc(m.nombre)}</td>
+                            <td>${esc(m.email)}</td>
+                            <td>${esc(m.telefono)}</td>
+                            <td>${esc(m.asunto)}</td>
+                            <td style="max-width:220px; white-space:pre-wrap; word-break:break-word;">${esc(m.mensaje)}</td>
+                            <td>${esc(m.creado_en?.slice(0, 10))}</td>
                             <td style="display:flex; flex-direction:column; gap:6px;">
-                                <button class="btn-tabla" onclick="abrirRespuesta(${m.id}, '${m.nombre.replace(/'/g, "\\'")}', '${m.email}')">Responder</button>
+                                <button class="btn-tabla" onclick="abrirRespuesta(${m.id}, '${esc(m.nombre).replace(/'/g, '&#39;')}', '${esc(m.email)}')">Responder</button>
                                 ${!m.leido ? `<button class="btn-tabla" onclick="marcarLeido(${m.id})">Marcar leído</button>` : '<span style="color:#6b7280; font-size:12px;">Leído</span>'}
                             </td>
                         </tr>
@@ -462,6 +488,47 @@ async function enviarRecordatorioManual() {
         alert(data.mensaje);
     } catch (e) {
         alert('Error al enviar recordatorios.');
+    }
+}
+
+async function cargarResenas() {
+    const contenedor = document.getElementById('contenido-resenas');
+    try {
+        const res = await fetch(`${API}/resenas`, { headers: { Authorization: `Bearer ${token}` } });
+        const resenas = await res.json();
+
+        if (!resenas.length) {
+            contenedor.innerHTML = '<p style="color:#888;">No hay reseñas todavía.</p>';
+            return;
+        }
+
+        const promedio = (resenas.reduce((s, r) => s + r.estrellas, 0) / resenas.length).toFixed(1);
+        const estrellasPromedio = '★'.repeat(Math.round(promedio)) + '☆'.repeat(5 - Math.round(promedio));
+
+        contenedor.innerHTML = `
+            <div style="background:#eff6ff; border-radius:12px; padding:20px 24px; margin-bottom:24px; display:flex; align-items:center; gap:20px;">
+                <div>
+                    <p style="font-size:36px; font-weight:700; color:#2563eb; margin:0;">${promedio}</p>
+                    <p style="font-size:18px; color:#f59e0b; margin:0;">${estrellasPromedio}</p>
+                </div>
+                <div>
+                    <p style="font-size:14px; color:#374151; font-weight:600; margin:0;">${resenas.length} reseña(s) de pacientes</p>
+                    <p style="font-size:13px; color:#6b7280; margin:4px 0 0;">Promedio general de calificación</p>
+                </div>
+            </div>
+            ${resenas.map(r => `
+                <div class="resena-card">
+                    <div class="resena-card-header">
+                        <span class="resena-card-nombre">${esc(r.paciente?.nombre || 'Paciente')}</span>
+                        <span class="estrellas-display">${'★'.repeat(r.estrellas)}${'☆'.repeat(5 - r.estrellas)}</span>
+                    </div>
+                    <p class="resena-card-servicio">${esc(r.cita?.servicio?.nombre || '')} &nbsp;·&nbsp; ${esc(r.creado_en?.slice(0, 10))}</p>
+                    ${r.comentario ? `<p class="resena-card-comentario">"${esc(r.comentario)}"</p>` : ''}
+                </div>
+            `).join('')}
+        `;
+    } catch (e) {
+        contenedor.innerHTML = '<p style="color:red;">Error al cargar reseñas.</p>';
     }
 }
 

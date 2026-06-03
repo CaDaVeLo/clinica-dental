@@ -30,30 +30,80 @@
         </div>
  
         <div id="resultado"></div>
- 
-        <br>
-        <div style="text-align: center;">
+
+        <div id="info-pasos" class="info-pasos">
+            <div class="info-paso">
+                <div class="info-paso-icono">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                <h4>Encuentra tu cita</h4>
+                <p>Ingresa tu email o CURP para ver todas tus citas registradas.</p>
+            </div>
+            <div class="info-paso">
+                <div class="info-paso-icono">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <h4>Reprograma cuando quieras</h4>
+                <p>Puedes cambiar la fecha de tu cita con al menos 2 horas de anticipación.</p>
+            </div>
+            <div class="info-paso">
+                <div class="info-paso-icono">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </div>
+                <h4>Cancela sin llamar</h4>
+                <p>Cancela directamente desde aquí con al menos 2 horas de anticipación.</p>
+            </div>
+        </div>
+
+        <div class="citas-nueva-cita">
             <a href="agenda-paciente.html" class="btn-siguiente">Agendar Nueva Cita</a>
         </div>
     </div>
- 
+
+    <!-- MODAL RESEÑA -->
+    <div id="modal-resena" class="modal-overlay">
+        <div class="modal-box" style="max-width:420px;">
+            <div class="modal-box-header">
+                <h3>Deja tu reseña</h3>
+                <button onclick="cerrarResena()" class="modal-btn-cerrar">✕</button>
+            </div>
+            <p id="resena-servicio-nombre" style="font-size:14px; color:#6b7280; margin-bottom:20px;"></p>
+            <div class="estrellas-input" id="estrellas-input">
+                <input type="radio" name="estrellas" id="e5" value="5"><label for="e5">&#9733;</label>
+                <input type="radio" name="estrellas" id="e4" value="4"><label for="e4">&#9733;</label>
+                <input type="radio" name="estrellas" id="e3" value="3"><label for="e3">&#9733;</label>
+                <input type="radio" name="estrellas" id="e2" value="2"><label for="e2">&#9733;</label>
+                <input type="radio" name="estrellas" id="e1" value="1"><label for="e1">&#9733;</label>
+            </div>
+            <div class="modal-campo-fecha">
+                <label>Comentario (opcional)</label>
+                <textarea id="resena-comentario" rows="3" placeholder="Cuéntanos cómo fue tu experiencia..." style="width:100%; border:1px solid #d1d5db; border-radius:8px; padding:10px 14px; font-size:14px; font-family:inherit; resize:vertical; box-sizing:border-box;"></textarea>
+            </div>
+            <div id="resena-error" style="color:red; font-size:13px; margin-bottom:8px; display:none;"></div>
+            <div class="modal-acciones" style="margin-top:16px;">
+                <button id="btn-enviar-resena" class="btn-siguiente" onclick="enviarResena()">Enviar reseña</button>
+                <button class="btn-atras" onclick="cerrarResena()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL REPROGRAMAR -->
-    <div id="modal-reprogramar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-        <div style="background:white; border-radius:16px; padding:32px; max-width:480px; width:90%; max-height:90vh; overflow-y:auto;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h3 style="font-size:18px; font-weight:700; color:#111;">Reprogramar cita</h3>
-                <button onclick="cerrarReprogramar()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#6b7280;">✕</button>
+    <div id="modal-reprogramar" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-box-header">
+                <h3>Reprogramar cita</h3>
+                <button onclick="cerrarReprogramar()" class="modal-btn-cerrar">✕</button>
             </div>
-            <div style="margin-bottom:16px;">
-                <label style="display:block; font-size:14px; font-weight:600; margin-bottom:6px;">Selecciona una nueva fecha</label>
-                <input type="date" id="rep-fecha" onchange="buscarSlots()" style="width:100%; border:1px solid #d1d5db; border-radius:8px; padding:10px 14px; font-size:14px; box-sizing:border-box;">
+            <div class="modal-campo-fecha">
+                <label>Selecciona una nueva fecha</label>
+                <input type="date" id="rep-fecha" onchange="buscarSlots()">
             </div>
-            <div id="rep-slots" style="margin-bottom:20px;"></div>
+            <div id="rep-slots" class="modal-slots"></div>
             <input type="hidden" id="rep-slot-sel">
             <input type="hidden" id="rep-doctor-sel">
-            <div style="display:flex; gap:12px;">
-                <button onclick="confirmarReprogramar()" class="btn-siguiente" style="flex:1;">Confirmar</button>
-                <button onclick="cerrarReprogramar()" class="btn-atras" style="flex:1;">Cancelar</button>
+            <div class="modal-acciones">
+                <button onclick="confirmarReprogramar()" class="btn-siguiente">Confirmar</button>
+                <button onclick="cerrarReprogramar()" class="btn-atras">Cancelar</button>
             </div>
         </div>
     </div>
