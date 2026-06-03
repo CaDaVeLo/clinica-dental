@@ -15,7 +15,10 @@
             </div>
             <div class="navbar-logo-texto">Clínica <strong>Dental</strong></div>
         </a>
-        <div class="navbar-links">
+        <button class="navbar-hamburger" id="hamburger" aria-label="Abrir menú">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="navbar-links" id="navbar-links">
             <a href="servicios.html">Servicios</a>
             <a href="mis-citas.html">Mis citas</a>
             <a href="contacto.html">Contacto</a>
@@ -30,7 +33,7 @@
         <div class="hero-contenido">
             <div class="hero-badge">
                 <span class="hero-badge-punto"></span>
-                Clínica Dental &nbsp;·&nbsp; Lun-Sáb 11:00 - 18:00
+                Clínica Dental &nbsp;·&nbsp; Lun-Sáb 08:00 - 17:30
             </div>
             <h1>Tu sonrisa<br>merece <em>lo mejor</em></h1>
             <p>Tratamientos dentales con tecnología de vanguardia, atención personalizada y los mejores especialistas. Agenda tu cita en minutos.</p>
@@ -239,7 +242,7 @@
     <footer class="footer">
         <div>
             <strong class="footer-logo">Clínica Dental</strong>
-            <p>Lun-Sáb 11:00 - 18:00 &nbsp;·&nbsp; Av. Principal 123, Culiacán Sinaloa</p>
+            <p>Lun-Sáb 08:00 - 17:30 &nbsp;·&nbsp; Av. Principal 123, Culiacán Sinaloa</p>
         </div>
         <div class="footer-links">
             <a href="servicios.html">Servicios</a>
@@ -249,6 +252,15 @@
     </footer>
  
     <script src="js/index.js"></script>
- 
+    <script>
+        (function() {
+            var h = document.getElementById('hamburger');
+            var n = document.getElementById('navbar-links');
+            if (!h || !n) return;
+            h.addEventListener('click', function() { h.classList.toggle('abierto'); n.classList.toggle('abierto'); });
+            n.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', function() { h.classList.remove('abierto'); n.classList.remove('abierto'); }); });
+        })();
+    </script>
+
 </body>
 </html>

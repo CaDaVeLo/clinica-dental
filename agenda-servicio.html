@@ -193,7 +193,10 @@
             </div>
             <div class="navbar-logo-texto">Clínica <strong>Dental</strong></div>
         </a>
-        <div class="navbar-links">
+        <button class="navbar-hamburger" id="hamburger" aria-label="Abrir menú">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="navbar-links" id="navbar-links">
             <a href="servicios.html">Servicios</a>
             <a href="mis-citas.html">Mis citas</a>
             <a href="contacto.html">Contacto</a>
@@ -317,5 +320,14 @@
     </div>
 
     <script src="js/agenda-servicio.js"></script>
+    <script>
+        (function() {
+            var h = document.getElementById('hamburger');
+            var n = document.getElementById('navbar-links');
+            if (!h || !n) return;
+            h.addEventListener('click', function() { h.classList.toggle('abierto'); n.classList.toggle('abierto'); });
+            n.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', function() { h.classList.remove('abierto'); n.classList.remove('abierto'); }); });
+        })();
+    </script>
 </body>
 </html>
