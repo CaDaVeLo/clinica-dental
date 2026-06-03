@@ -3,14 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elegir Servicio - Clínica Dental</title>
+    <title>Elegir Servicio — Clínica Dental</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        * { box-sizing: border-box; }
+
+        body { background: #f0f4ff; font-family: 'Segoe UI', sans-serif; }
+
+        .contenedor-agenda {
+            display: flex; gap: 28px;
+            padding: 92px 36px 48px;
+            max-width: 1160px; margin: 0 auto;
+            align-items: flex-start; min-height: 100vh;
+        }
+
+        /* ══ Panel izquierdo ══ */
+        .panel-izquierdo {
+            width: 300px; flex-shrink: 0;
+            background: linear-gradient(145deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+            border-radius: 22px; padding: 32px 26px; color: #fff;
+            position: sticky; top: 88px; overflow: hidden;
+        }
+        .panel-izquierdo::before {
+            content: ''; position: absolute;
+            width: 260px; height: 260px;
+            background: rgba(255,255,255,0.06); border-radius: 50%;
+            top: -90px; right: -90px; pointer-events: none;
+        }
+        .panel-izquierdo::after {
+            content: ''; position: absolute;
+            width: 180px; height: 180px;
+            background: rgba(255,255,255,0.04); border-radius: 50%;
+            bottom: -60px; left: -60px; pointer-events: none;
+        }
+
+        .pi-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; position: relative; z-index: 1; }
+        .pi-logo-icono { width: 38px; height: 38px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .pi-logo-icono img { width: 22px; height: 22px; }
+        .pi-logo span { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+
+        .pi-ilustracion { display: flex; justify-content: center; margin-bottom: 22px; position: relative; z-index: 1; }
+        .pi-ilustracion-circulo {
+            width: 96px; height: 96px;
+            background: rgba(255,255,255,0.13); border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.18);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+        .pi-ilustracion-circulo img { width: 52px; height: 52px; }
+
+        .panel-izquierdo h2 { font-size: 21px; font-weight: 800; line-height: 1.3; margin-bottom: 5px; position: relative; z-index: 1; }
+        .panel-izquierdo .subtitulo { font-size: 12.5px; color: rgba(255,255,255,0.68); margin-bottom: 24px; line-height: 1.5; position: relative; z-index: 1; }
+
+        .pi-pasos { display: flex; flex-direction: column; gap: 3px; margin-bottom: 26px; position: relative; z-index: 1; }
+        .pi-paso { display: flex; align-items: center; gap: 11px; padding: 9px 11px; border-radius: 10px; opacity: 0.5; }
+        .pi-paso.activo { background: rgba(255,255,255,0.18); opacity: 1; }
+        .pi-paso.completado { opacity: 0.72; }
+        .pi-paso-num { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+        .pi-paso.activo .pi-paso-num { background: #fff; color: #2563eb; }
+        .pi-paso.completado .pi-paso-num { background: rgba(255,255,255,0.35); }
+        .pi-paso-label { font-size: 13px; font-weight: 600; }
+        .pi-paso-sub   { font-size: 11px; color: rgba(255,255,255,0.6); }
+
+        .ventaja { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 13px; position: relative; z-index: 1; }
+        .ventaja-icono { width: 30px; height: 30px; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .ventaja-icono img { width: 17px; height: 17px; }
+        .ventaja strong { display: block; font-size: 13px; font-weight: 600; }
+        .ventaja span   { font-size: 11px; color: rgba(255,255,255,0.62); }
+
+        /* ══ Panel derecho ══ */
+        .panel-derecho {
+            flex: 1; background: #fff; border: none !important;
+            border-radius: 22px; padding: 36px 40px;
+            box-shadow: 0 4px 28px rgba(37,99,235,0.08);
+        }
+
+        .pasos { margin-bottom: 30px; }
+        .paso-etiqueta { font-size: 11.5px; }
+
+        .pd-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: #eff6ff; color: #2563eb;
+            font-size: 12px; font-weight: 600;
+            padding: 5px 13px; border-radius: 20px;
+            margin-bottom: 14px;
+        }
+        .pd-badge img { width: 14px; height: 14px; }
+
+        .panel-derecho h3 { font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 5px; }
+        .pd-subtitulo { font-size: 14px; color: #64748b; margin-bottom: 24px; line-height: 1.5; }
+
+        /* ── Tarjetas de tratamiento mejoradas ── */
+        .lista-tratamientos { display: flex; flex-direction: column; gap: 10px; }
+
+        .tratamiento-item {
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 14px; padding: 16px 20px;
+            cursor: pointer;
+            background: #fff;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s;
+            position: relative; overflow: hidden;
+        }
+        .tratamiento-item::before {
+            content: '';
+            position: absolute; left: 0; top: 0; bottom: 0;
+            width: 4px;
+            background: #2563eb;
+            border-radius: 4px 0 0 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .tratamiento-item:hover {
+            border-color: #93c5fd;
+            background: #f8fbff;
+            box-shadow: 0 4px 16px rgba(37,99,235,0.08);
+            transform: translateY(-1px);
+        }
+        .tratamiento-item:hover::before { opacity: 1; }
+        .tratamiento-item.seleccionado {
+            border-color: #2563eb;
+            background: #eff6ff;
+            box-shadow: 0 4px 16px rgba(37,99,235,0.12);
+        }
+        .tratamiento-item.seleccionado::before { opacity: 1; }
+
+        .tratamiento-info h4 { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 3px; }
+        .tratamiento-info span { font-size: 12.5px; color: #6b7280; display: flex; align-items: center; gap: 4px; }
+
+        .tratamiento-precio {
+            text-align: right;
+        }
+        .tratamiento-precio .precio-val {
+            font-size: 18px; font-weight: 800; color: #2563eb; display: block;
+        }
+        .tratamiento-precio small { font-size: 11px; font-weight: 400; color: #9ca3af; }
+
+        /* Cargando placeholder */
+        .cargando-placeholder {
+            display: flex; align-items: center; gap: 10px;
+            color: #94a3b8; font-size: 14px; padding: 20px 0;
+        }
+        .spinner-mini {
+            width: 18px; height: 18px;
+            border: 2px solid #dbeafe; border-top-color: #2563eb;
+            border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Botones */
+        .botones-nav { display: flex; align-items: center; gap: 12px; margin-top: 28px; }
+
+        .btn-siguiente {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+            color: #fff !important; border: none !important;
+            padding: 13px 30px !important; border-radius: 10px !important;
+            font-size: 15px !important; font-weight: 700 !important; cursor: pointer;
+            display: inline-flex !important; align-items: center !important; gap: 8px !important;
+            box-shadow: 0 4px 14px rgba(37,99,235,0.3) !important;
+            transition: transform 0.15s, box-shadow 0.2s !important; text-decoration: none !important;
+        }
+        .btn-siguiente:hover { transform: translateY(-1px) !important; box-shadow: 0 6px 20px rgba(37,99,235,0.4) !important; }
+
+        .btn-atras {
+            background: #fff !important; color: #374151 !important;
+            border: 1.5px solid #e5e7eb !important;
+            padding: 12px 22px !important; border-radius: 10px !important;
+            font-size: 15px !important; font-weight: 600 !important; cursor: pointer;
+            display: inline-flex !important; align-items: center !important; gap: 7px !important;
+            text-decoration: none !important;
+            transition: background 0.2s, border-color 0.2s, color 0.2s !important;
+        }
+        .btn-atras:hover { background: #f0f4ff !important; border-color: #93c5fd !important; color: #2563eb !important; }
+
+        @media (max-width: 880px) {
+            .contenedor-agenda { flex-direction: column; padding: 88px 18px 40px; }
+            .panel-izquierdo { width: 100%; position: static; }
+            .pi-pasos { display: none; }
+            .panel-derecho { padding: 28px 22px; }
+        }
+    </style>
 </head>
 <body>
- 
-    <nav class="navbar">
-            <a href="index.html" class="navbar-logo">Clínica Dental</a>
 
+    <nav class="navbar">
+        <a href="index.html" class="navbar-logo">
+            <div class="navbar-logo-icono">
+                <img src="https://api.iconify.design/healthicons/tooth.svg?color=white" alt="Logo">
+            </div>
+            <div class="navbar-logo-texto">Clínica <strong>Dental</strong></div>
+        </a>
         <div class="navbar-links">
             <a href="servicios.html">Servicios</a>
             <a href="mis-citas.html">Mis citas</a>
@@ -18,18 +200,76 @@
             <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
         </div>
     </nav>
- 
+
     <div class="contenedor-agenda">
+
+        <!-- ══ Panel izquierdo ══ -->
         <div class="panel-izquierdo">
-            <h2>Agenda tu cita</h2>
-            <p class="subtitulo">4 pasos rápidos, sin llamadas</p>
-            <div class="ventaja"><strong>Confirmación inmediata</strong><span>Email y SMS al instante</span></div>
-            <div class="ventaja"><strong>Cancela fácil</strong><span>Hasta 24 horas antes</span></div>
-            <div class="ventaja"><strong>100% seguro</strong><span>Información protegida</span></div>
-            <div class="ventaja"><strong>Flexible</strong><span>Efectivo o tarjeta</span></div>
+
+            <div class="pi-logo">
+                <div class="pi-logo-icono">
+                    <img src="https://api.iconify.design/healthicons/tooth.svg?color=white" alt="">
+                </div>
+                <span>Clínica Dental</span>
+            </div>
+
+            <div class="pi-ilustracion">
+                <div class="pi-ilustracion-circulo">
+                    <img src="https://api.iconify.design/mdi/medical-bag.svg?color=white" alt="">
+                </div>
+            </div>
+
+            <h2>Elige tu<br>tratamiento</h2>
+            <p class="subtitulo">Selecciona el servicio que necesitas y continúa</p>
+
+            <div class="pi-pasos">
+                <div class="pi-paso completado">
+                    <div class="pi-paso-num">✓</div>
+                    <div>
+                        <div class="pi-paso-label">Paciente</div>
+                        <div class="pi-paso-sub">Datos registrados</div>
+                    </div>
+                </div>
+                <div class="pi-paso activo">
+                    <div class="pi-paso-num">2</div>
+                    <div>
+                        <div class="pi-paso-label">Servicio</div>
+                        <div class="pi-paso-sub">Elige el tratamiento</div>
+                    </div>
+                </div>
+                <div class="pi-paso">
+                    <div class="pi-paso-num">3</div>
+                    <div>
+                        <div class="pi-paso-label">Fecha y hora</div>
+                        <div class="pi-paso-sub">Selecciona tu horario</div>
+                    </div>
+                </div>
+                <div class="pi-paso">
+                    <div class="pi-paso-num">4</div>
+                    <div>
+                        <div class="pi-paso-label">Pago</div>
+                        <div class="pi-paso-sub">Método de pago</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ventaja">
+                <div class="ventaja-icono"><img src="https://api.iconify.design/mdi/tooth-outline.svg?color=white" alt=""></div>
+                <div><strong>Tratamientos certificados</strong><span>Personal especializado</span></div>
+            </div>
+            <div class="ventaja">
+                <div class="ventaja-icono"><img src="https://api.iconify.design/mdi/clock-time-four-outline.svg?color=white" alt=""></div>
+                <div><strong>Duración estimada</strong><span>Mostrada en cada servicio</span></div>
+            </div>
+            <div class="ventaja">
+                <div class="ventaja-icono"><img src="https://api.iconify.design/mdi/currency-usd.svg?color=white" alt=""></div>
+                <div><strong>Precio transparente</strong><span>Sin costos ocultos</span></div>
+            </div>
         </div>
- 
+
+        <!-- ══ Panel derecho ══ -->
         <div class="panel-derecho">
+
             <div class="pasos">
                 <div class="paso completado">
                     <div class="paso-circulo">✓</div>
@@ -48,19 +288,34 @@
                     <span class="paso-etiqueta">Pago</span>
                 </div>
             </div>
- 
-            <h3>Selecciona el Tratamiento</h3>
- 
-            <div class="lista-tratamientos" id="lista-tratamientos">
-                <p>Cargando servicios...</p>
+
+            <div class="pd-badge">
+                <img src="https://api.iconify.design/mdi/medical-bag.svg?color=%232563eb" alt="">
+                Paso 2 de 4
             </div>
- 
-            <br>
-            <a href="agenda-paciente.html" class="btn-atras">Atrás</a>
-            <button class="btn-siguiente" onclick="siguiente()">Siguiente: Elegir fecha</button>
+            <h3>Selecciona el tratamiento</h3>
+            <p class="pd-subtitulo">Elige el servicio dental que deseas recibir.</p>
+
+            <div class="lista-tratamientos" id="lista-tratamientos">
+                <div class="cargando-placeholder">
+                    <div class="spinner-mini"></div>
+                    Cargando servicios disponibles…
+                </div>
+            </div>
+
+            <div class="botones-nav">
+                <a href="agenda-paciente.html" class="btn-atras">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    Atrás
+                </a>
+                <button class="btn-siguiente" onclick="siguiente()">
+                    Siguiente: Elegir fecha
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
         </div>
     </div>
- 
+
     <script src="js/agenda-servicio.js"></script>
 </body>
 </html>

@@ -3,14 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservar Cita - Clínica Dental</title>
+    <title>Reservar Cita — Clínica Dental</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            background: #f0f4ff;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* ── Contenedor principal ── */
+        .contenedor-agenda {
+            display: flex;
+            gap: 28px;
+            padding: 92px 36px 48px;
+            max-width: 1160px;
+            margin: 0 auto;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        /* ══════════════════════════════════
+           PANEL IZQUIERDO
+        ══════════════════════════════════ */
+        .panel-izquierdo {
+            width: 300px;
+            flex-shrink: 0;
+            background: linear-gradient(145deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+            border-radius: 22px;
+            padding: 32px 26px;
+            color: #fff;
+            position: sticky;
+            top: 88px;
+            overflow: hidden;
+        }
+
+        .panel-izquierdo::before {
+            content: '';
+            position: absolute;
+            width: 260px; height: 260px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 50%;
+            top: -90px; right: -90px;
+            pointer-events: none;
+        }
+        .panel-izquierdo::after {
+            content: '';
+            position: absolute;
+            width: 180px; height: 180px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+            bottom: -60px; left: -60px;
+            pointer-events: none;
+        }
+
+        /* Logo */
+        .pi-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 28px;
+            position: relative;
+            z-index: 1;
+        }
+        .pi-logo-icono {
+            width: 38px; height: 38px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .pi-logo-icono img { width: 22px; height: 22px; }
+        .pi-logo span { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+
+        /* Ilustración central */
+        .pi-ilustracion {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 22px;
+            position: relative;
+            z-index: 1;
+        }
+        .pi-ilustracion-circulo {
+            width: 96px; height: 96px;
+            background: rgba(255,255,255,0.13);
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.18);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+        .pi-ilustracion-circulo img { width: 52px; height: 52px; }
+
+        .panel-izquierdo h2 {
+            font-size: 21px; font-weight: 800; line-height: 1.3;
+            margin-bottom: 5px;
+            position: relative; z-index: 1;
+        }
+        .panel-izquierdo .subtitulo {
+            font-size: 12.5px; color: rgba(255,255,255,0.68);
+            margin-bottom: 24px; line-height: 1.5;
+            position: relative; z-index: 1;
+        }
+
+        /* Pasos verticales */
+        .pi-pasos {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-bottom: 26px;
+            position: relative; z-index: 1;
+        }
+        .pi-paso {
+            display: flex; align-items: center; gap: 11px;
+            padding: 9px 11px;
+            border-radius: 10px;
+            opacity: 0.5;
+        }
+        .pi-paso.activo   { background: rgba(255,255,255,0.18); opacity: 1; }
+        .pi-paso.completado { opacity: 0.7; }
+        .pi-paso-num {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.18);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; flex-shrink: 0;
+        }
+        .pi-paso.activo .pi-paso-num { background: #fff; color: #2563eb; }
+        .pi-paso-label { font-size: 13px; font-weight: 600; }
+        .pi-paso-sub   { font-size: 11px; color: rgba(255,255,255,0.6); }
+
+        /* Ventajas */
+        .ventaja {
+            display: flex; align-items: flex-start; gap: 10px;
+            margin-bottom: 13px;
+            position: relative; z-index: 1;
+        }
+        .ventaja-icono {
+            width: 30px; height: 30px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .ventaja-icono img { width: 17px; height: 17px; }
+        .ventaja strong { display: block; font-size: 13px; font-weight: 600; }
+        .ventaja span   { font-size: 11px; color: rgba(255,255,255,0.62); }
+
+        /* ══════════════════════════════════
+           PANEL DERECHO
+        ══════════════════════════════════ */
+        .panel-derecho {
+            flex: 1;
+            background: #fff;
+            border: none !important;
+            border-radius: 22px;
+            padding: 36px 40px;
+            box-shadow: 0 4px 28px rgba(37,99,235,0.08);
+        }
+
+        /* Step dots */
+        .pasos { margin-bottom: 30px; }
+        .paso-etiqueta { font-size: 11.5px; }
+
+        /* Header del formulario */
+        .pd-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: #eff6ff; color: #2563eb;
+            font-size: 12px; font-weight: 600;
+            padding: 5px 13px; border-radius: 20px;
+            margin-bottom: 14px;
+            letter-spacing: 0.2px;
+        }
+        .pd-badge img { width: 14px; height: 14px; }
+
+        .panel-derecho h3 {
+            font-size: 24px; font-weight: 800;
+            color: #0f172a; margin-bottom: 5px;
+        }
+        .pd-subtitulo {
+            font-size: 14px; color: #64748b;
+            margin-bottom: 28px; line-height: 1.5;
+        }
+
+        /* Error */
+        .alerta-error-ag {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            border-radius: 10px;
+            padding: 11px 15px;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        /* Campos */
+        .fila-form { display: flex; gap: 16px; margin-bottom: 18px; }
+        .campo { display: flex; flex-direction: column; flex: 1; }
+
+        .campo label {
+            font-size: 13px; font-weight: 600;
+            color: #374151; margin-bottom: 7px;
+        }
+
+        .input-wrap { position: relative; }
+        .input-wrap .input-icon {
+            position: absolute;
+            left: 13px; top: 50%;
+            transform: translateY(-50%);
+            width: 17px; height: 17px;
+            pointer-events: none;
+        }
+        .input-wrap input {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #0f172a;
+            background: #f8faff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+        .input-wrap input::placeholder { color: #b0b8c4; }
+        .input-wrap input:focus {
+            border-color: #2563eb;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        /* Botones */
+        .botones-nav {
+            display: flex; align-items: center; gap: 12px; margin-top: 28px;
+        }
+        .btn-siguiente {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+            color: #fff !important;
+            border: none !important;
+            padding: 13px 30px !important;
+            border-radius: 10px !important;
+            font-size: 15px !important; font-weight: 700 !important;
+            cursor: pointer;
+            display: inline-flex !important; align-items: center !important; gap: 8px !important;
+            box-shadow: 0 4px 14px rgba(37,99,235,0.3) !important;
+            transition: transform 0.15s, box-shadow 0.2s !important;
+            text-decoration: none !important;
+        }
+        .btn-siguiente:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 20px rgba(37,99,235,0.4) !important;
+        }
+        .btn-siguiente svg { flex-shrink: 0; }
+
+        /* ── Responsive ── */
+        @media (max-width: 880px) {
+            .contenedor-agenda { flex-direction: column; padding: 88px 18px 40px; }
+            .panel-izquierdo   { width: 100%; position: static; }
+            .pi-pasos          { display: none; }
+            .panel-derecho     { padding: 28px 22px; }
+        }
+        @media (max-width: 500px) {
+            .fila-form { flex-direction: column; }
+        }
+    </style>
 </head>
 <body>
- 
-    <nav class="navbar">
-            <a href="index.html" class="navbar-logo">Clínica Dental</a>
 
+    <nav class="navbar">
+        <a href="index.html" class="navbar-logo">
+            <div class="navbar-logo-icono">
+                <img src="https://api.iconify.design/healthicons/tooth.svg?color=white" alt="Logo">
+            </div>
+            <div class="navbar-logo-texto">Clínica <strong>Dental</strong></div>
+        </a>
         <div class="navbar-links">
             <a href="servicios.html">Servicios</a>
             <a href="mis-citas.html">Mis citas</a>
@@ -18,18 +282,101 @@
             <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
         </div>
     </nav>
- 
+
     <div class="contenedor-agenda">
+
+        <!-- ══ Panel izquierdo ══ -->
         <div class="panel-izquierdo">
-            <h2>Agenda tu cita</h2>
-            <p class="subtitulo">4 pasos rápidos, sin llamadas</p>
-            <div class="ventaja"><strong>Confirmación inmediata</strong><span>Email y SMS al instante</span></div>
-            <div class="ventaja"><strong>Cancela fácil</strong><span>Hasta 24 horas antes</span></div>
-            <div class="ventaja"><strong>100% seguro</strong><span>Información protegida</span></div>
-            <div class="ventaja"><strong>Flexible</strong><span>Efectivo o tarjeta</span></div>
+
+            <div class="pi-logo">
+                <div class="pi-logo-icono">
+                    <img src="https://api.iconify.design/healthicons/tooth.svg?color=white" alt="">
+                </div>
+                <span>Clínica Dental</span>
+            </div>
+
+            <div class="pi-ilustracion">
+                <div class="pi-ilustracion-circulo">
+                    <img src="https://api.iconify.design/mdi/account-heart-outline.svg?color=white" alt="">
+                </div>
+            </div>
+
+            <h2>Reserva tu<br>cita dental</h2>
+            <p class="subtitulo">4 pasos simples, sin llamadas ni filas</p>
+
+            <div class="pi-pasos">
+                <div class="pi-paso activo">
+                    <div class="pi-paso-num">1</div>
+                    <div>
+                        <div class="pi-paso-label">Paciente</div>
+                        <div class="pi-paso-sub">Tus datos personales</div>
+                    </div>
+                </div>
+                <div class="pi-paso">
+                    <div class="pi-paso-num">2</div>
+                    <div>
+                        <div class="pi-paso-label">Servicio</div>
+                        <div class="pi-paso-sub">Elige el tratamiento</div>
+                    </div>
+                </div>
+                <div class="pi-paso">
+                    <div class="pi-paso-num">3</div>
+                    <div>
+                        <div class="pi-paso-label">Fecha y hora</div>
+                        <div class="pi-paso-sub">Selecciona tu horario</div>
+                    </div>
+                </div>
+                <div class="pi-paso">
+                    <div class="pi-paso-num">4</div>
+                    <div>
+                        <div class="pi-paso-label">Pago</div>
+                        <div class="pi-paso-sub">Método de pago</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ventaja">
+                <div class="ventaja-icono">
+                    <img src="https://api.iconify.design/mdi/check-circle-outline.svg?color=white" alt="">
+                </div>
+                <div>
+                    <strong>Confirmación inmediata</strong>
+                    <span>Email y SMS al instante</span>
+                </div>
+            </div>
+            <div class="ventaja">
+                <div class="ventaja-icono">
+                    <img src="https://api.iconify.design/mdi/calendar-remove-outline.svg?color=white" alt="">
+                </div>
+                <div>
+                    <strong>Cancela fácil</strong>
+                    <span>Hasta 24 horas antes</span>
+                </div>
+            </div>
+            <div class="ventaja">
+                <div class="ventaja-icono">
+                    <img src="https://api.iconify.design/mdi/shield-check-outline.svg?color=white" alt="">
+                </div>
+                <div>
+                    <strong>100% seguro</strong>
+                    <span>Datos protegidos</span>
+                </div>
+            </div>
+            <div class="ventaja">
+                <div class="ventaja-icono">
+                    <img src="https://api.iconify.design/mdi/credit-card-outline.svg?color=white" alt="">
+                </div>
+                <div>
+                    <strong>Flexible</strong>
+                    <span>Efectivo o tarjeta</span>
+                </div>
+            </div>
         </div>
- 
+
+        <!-- ══ Panel derecho ══ -->
         <div class="panel-derecho">
+
+            <!-- Indicador de pasos -->
             <div class="pasos">
                 <div class="paso activo">
                     <div class="paso-circulo">1</div>
@@ -48,37 +395,64 @@
                     <span class="paso-etiqueta">Pago</span>
                 </div>
             </div>
- 
+
+            <!-- Cabecera -->
+            <div class="pd-badge">
+                <img src="https://api.iconify.design/mdi/account-outline.svg?color=%232563eb" alt="">
+                Paso 1 de 4
+            </div>
             <h3>Datos del paciente</h3>
- 
-            <div id="mensaje-error" style="color:red; margin-bottom:10px; display:none;"></div>
- 
+            <p class="pd-subtitulo">Completa tu información para comenzar la reserva.</p>
+
+            <!-- Error -->
+            <div id="mensaje-error" class="alerta-error-ag" style="display:none;"></div>
+
+            <!-- Formulario -->
             <div class="fila-form">
                 <div class="campo">
-                    <label>Nombre completo *</label>
-                    <input type="text" id="nombre" placeholder="Carlos Velarde">
+                    <label for="nombre">Nombre completo *</label>
+                    <div class="input-wrap">
+                        <img class="input-icon" src="https://api.iconify.design/mdi/account-outline.svg?color=%239ca3af" alt="">
+                        <input type="text" id="nombre" placeholder="Carlos Velarde">
+                    </div>
                 </div>
                 <div class="campo">
-                    <label>CURP *</label>
-                    <input type="text" id="curp" placeholder="VERCMHSLLPRA301">
+                    <label for="curp">CURP *</label>
+                    <div class="input-wrap">
+                        <img class="input-icon" src="https://api.iconify.design/mdi/card-account-details-outline.svg?color=%239ca3af" alt="">
+                        <input type="text" id="curp" placeholder="VERCMHSLLPRA301">
+                    </div>
                 </div>
             </div>
- 
+
             <div class="fila-form">
                 <div class="campo">
-                    <label>Correo electrónico *</label>
-                    <input type="email" id="email" placeholder="correo@gmail.com">
+                    <label for="email">Correo electrónico *</label>
+                    <div class="input-wrap">
+                        <img class="input-icon" src="https://api.iconify.design/mdi/email-outline.svg?color=%239ca3af" alt="">
+                        <input type="email" id="email" placeholder="correo@gmail.com">
+                    </div>
                 </div>
                 <div class="campo">
-                    <label>Teléfono *</label>
-                    <input type="tel" id="telefono" placeholder="6657325525">
+                    <label for="telefono">Teléfono</label>
+                    <div class="input-wrap">
+                        <img class="input-icon" src="https://api.iconify.design/mdi/phone-outline.svg?color=%239ca3af" alt="">
+                        <input type="tel" id="telefono" placeholder="6657325525">
+                    </div>
                 </div>
             </div>
- 
-            <button class="btn-siguiente" onclick="siguiente()">Siguiente: Elegir servicio</button>
+
+            <div class="botones-nav">
+                <button class="btn-siguiente" onclick="siguiente()">
+                    Siguiente: Elegir servicio
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
- 
+
     <script src="js/agenda-paciente.js"></script>
 </body>
 </html>
