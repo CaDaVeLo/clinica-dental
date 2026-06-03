@@ -16,6 +16,7 @@
             <nav class="sidebar-nav">
                 <a href="#" class="sidebar-link activo" onclick="mostrarSeccion('hoy', this)">Citas de hoy</a>
                 <a href="#" class="sidebar-link" onclick="mostrarSeccion('horario', this)">Mi horario</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('presupuestos', this)">Presupuestos</a>
             </nav>
             <button class="btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar sesión</button>
         </aside>
@@ -34,6 +35,15 @@
             <!-- HORARIO -->
             <div id="seccion-horario" style="display:none;">
                 <div id="tabla-horario"></div>
+            </div>
+
+            <!-- PRESUPUESTOS -->
+            <div id="seccion-presupuestos" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <p style="font-size:14px; color:#6b7280;">Cotizaciones generadas para pacientes.</p>
+                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="abrirModalPresupuesto()">+ Nuevo presupuesto</button>
+                </div>
+                <div id="lista-presupuestos"></div>
             </div>
         </main>
     </div>
@@ -57,6 +67,28 @@
                 <label>Notas generales</label>
                 <textarea id="exp-notas" style="border:1px solid #ddd; border-radius:8px; padding:10px; width:100%; height:100px; font-family:inherit; font-size:14px; resize:vertical;"></textarea>
             </div>
+            <!-- ODONTOGRAMA -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:14px; font-weight:600; margin-bottom:10px;">Odontograma</label>
+                <div style="font-size:11px; color:#6b7280; margin-bottom:8px;">
+                    Haz clic en un diente para cambiar su estado.
+                    <span style="margin-left:12px;">
+                        <span style="display:inline-block; width:10px; height:10px; background:#f9fafb; border:1px solid #d1d5db; border-radius:2px;"></span> Sano &nbsp;
+                        <span style="display:inline-block; width:10px; height:10px; background:#d97706; border-radius:2px;"></span> Caries &nbsp;
+                        <span style="display:inline-block; width:10px; height:10px; background:#3b82f6; border-radius:2px;"></span> Obturado &nbsp;
+                        <span style="display:inline-block; width:10px; height:10px; background:#6b7280; border-radius:2px;"></span> Extraído &nbsp;
+                        <span style="display:inline-block; width:10px; height:10px; background:#f59e0b; border-radius:2px;"></span> Corona &nbsp;
+                        <span style="display:inline-block; width:10px; height:10px; background:#7c3aed; border-radius:2px;"></span> Implante
+                    </span>
+                </div>
+                <div id="odontograma-container" style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:16px;">
+                    <p style="font-size:12px; font-weight:600; color:#6b7280; margin-bottom:6px; text-align:center;">Superior</p>
+                    <div id="fila-superior" style="display:flex; gap:4px; justify-content:center; margin-bottom:12px;"></div>
+                    <div id="fila-inferior" style="display:flex; gap:4px; justify-content:center; margin-bottom:6px;"></div>
+                    <p style="font-size:12px; font-weight:600; color:#6b7280; text-align:center;">Inferior</p>
+                </div>
+            </div>
+
             <div id="error-expediente" style="color:red; font-size:13px; display:none; margin-top:8px;"></div>
             <div style="margin-top:20px;">
                 <button class="btn-siguiente" onclick="guardarExpediente()">Guardar expediente</button>
@@ -83,6 +115,49 @@
         </div>
     </div>
  
+    <!-- MODAL PRESUPUESTO -->
+    <div id="modal-presupuesto" class="modal" style="display:none;">
+        <div class="modal-contenido" style="max-width:560px; max-height:90vh; overflow-y:auto;">
+            <div class="modal-header">
+                <h3>Nuevo presupuesto</h3>
+                <button onclick="cerrarModal('modal-presupuesto')" class="modal-cerrar">✕</button>
+            </div>
+            <div class="fila-form">
+                <div class="campo">
+                    <label>Paciente *</label>
+                    <select id="pres-paciente" style="border:1px solid #ddd; border-radius:8px; padding:10px; width:100%; font-size:14px;"></select>
+                </div>
+                <div class="campo">
+                    <label>Descuento general (%)</label>
+                    <input type="number" id="pres-descuento" min="0" max="100" value="0" style="border:1px solid #ddd; border-radius:8px; padding:10px; width:100%; font-size:14px; box-sizing:border-box;">
+                </div>
+            </div>
+            <div style="margin-bottom:14px;">
+                <label style="font-size:14px; font-weight:600; display:block; margin-bottom:8px;">Servicios a incluir</label>
+                <div id="pres-servicios-lista" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+            <div class="campo" style="margin-bottom:16px;">
+                <label>Notas</label>
+                <textarea id="pres-notas" style="border:1px solid #ddd; border-radius:8px; padding:10px; width:100%; height:70px; font-family:inherit; font-size:14px; resize:vertical;"></textarea>
+            </div>
+            <div style="background:#f9fafb; border-radius:8px; padding:14px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:4px;">
+                    <span>Subtotal:</span><span id="pres-subtotal">$0</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:4px; color:#ef4444;">
+                    <span>Descuento:</span><span id="pres-desc-val">$0</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700;">
+                    <span>Total:</span><span id="pres-total">$0</span>
+                </div>
+            </div>
+            <div style="margin-top:16px;">
+                <button class="btn-siguiente" onclick="guardarPresupuesto()">Guardar presupuesto</button>
+                <button class="btn-atras" onclick="cerrarModal('modal-presupuesto')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/panel-doctor.js"></script>
 </body>
 </html>

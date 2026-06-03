@@ -8,12 +8,15 @@
 </head>
 <body>
  
-    <nav>
-        <a href="index.html">Inicio</a>
-        <a href="servicios.html">Servicios</a>
-        <a href="mis-citas.html">Mis citas</a>
-        <a href="contacto.html">Contacto</a>
-        <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
+    <nav class="navbar">
+            <a href="index.html" class="navbar-logo">Clínica Dental</a>
+
+        <div class="navbar-links">
+            <a href="servicios.html">Servicios</a>
+            <a href="mis-citas.html">Mis citas</a>
+            <a href="contacto.html">Contacto</a>
+            <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
+        </div>
     </nav>
  
     <div class="contenedor-agenda">
@@ -28,10 +31,22 @@
  
         <div class="panel-derecho">
             <div class="pasos">
-                <div class="paso">Paciente</div>
-                <div class="paso">Servicio</div>
-                <div class="paso">Fecha y hora</div>
-                <div class="paso activo">Pago</div>
+                <div class="paso completado">
+                    <div class="paso-circulo">✓</div>
+                    <span class="paso-etiqueta">Paciente</span>
+                </div>
+                <div class="paso completado">
+                    <div class="paso-circulo">✓</div>
+                    <span class="paso-etiqueta">Servicio</span>
+                </div>
+                <div class="paso completado">
+                    <div class="paso-circulo">✓</div>
+                    <span class="paso-etiqueta">Fecha y hora</span>
+                </div>
+                <div class="paso activo">
+                    <div class="paso-circulo">4</div>
+                    <span class="paso-etiqueta">Pago</span>
+                </div>
             </div>
  
             <h3>Método de Pago</h3>

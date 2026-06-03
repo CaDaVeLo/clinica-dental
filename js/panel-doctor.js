@@ -3,6 +3,16 @@ const token = localStorage.getItem('token');
 const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 let citaNotasId = null;
 let pacienteExpedienteId = null;
+
+function esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
  
 if (!token) window.location.href = 'login.html';
  
@@ -17,16 +27,19 @@ function cerrarSesion() {
 function mostrarSeccion(seccion, link) {
     document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('activo'));
     link.classList.add('activo');
- 
-    document.getElementById('seccion-hoy').style.display = 'none';
-    document.getElementById('seccion-horario').style.display = 'none';
- 
-    const titulos = { hoy: 'Citas de hoy', horario: 'Mi horario' };
-    document.getElementById('titulo-seccion').textContent = titulos[seccion];
+
+    ['hoy', 'horario', 'presupuestos'].forEach(s => {
+        const el = document.getElementById(`seccion-${s}`);
+        if (el) el.style.display = 'none';
+    });
+
+    const titulos = { hoy: 'Citas de hoy', horario: 'Mi horario', presupuestos: 'Presupuestos' };
+    document.getElementById('titulo-seccion').textContent = titulos[seccion] || seccion;
     document.getElementById(`seccion-${seccion}`).style.display = 'block';
- 
+
     if (seccion === 'hoy') cargarCitasHoy();
     if (seccion === 'horario') cargarHorario();
+    if (seccion === 'presupuestos') cargarPresupuestos();
 }
  
 async function cargarCitasHoy() {
@@ -46,16 +59,16 @@ async function cargarCitasHoy() {
         contenedor.innerHTML = citas.map(c => `
             <div class="cita-card">
                 <div class="cita-header">
-                    <h3>${c.paciente?.nombre || 'Paciente'}</h3>
-                    <span class="badge ${c.estado === 'confirmada' ? 'confirmada' : 'pendiente'}">${c.estado}</span>
+                    <h3>${esc(c.paciente?.nombre) || 'Paciente'}</h3>
+                    <span class="badge ${c.estado === 'confirmada' ? 'confirmada' : 'pendiente'}">${esc(c.estado)}</span>
                 </div>
                 <p class="cita-info">
-                    ${c.hora?.slice(0,5)} &nbsp;·&nbsp; ${c.servicio?.nombre || '-'} &nbsp;·&nbsp; $${Number(c.servicio?.precio || 0).toLocaleString()} MXN
+                    ${esc(c.hora?.slice(0,5))} &nbsp;·&nbsp; ${esc(c.servicio?.nombre)} &nbsp;·&nbsp; $${Number(c.servicio?.precio || 0).toLocaleString()} MXN
                 </p>
-                ${c.notas ? `<p style="font-size:13px; color:#555; margin-bottom:10px; background:#f9fafb; padding:8px 12px; border-radius:6px;">${c.notas}</p>` : ''}
+                ${c.notas ? `<p style="font-size:13px; color:#555; margin-bottom:10px; background:#f9fafb; padding:8px 12px; border-radius:6px;">${esc(c.notas)}</p>` : ''}
                 <div class="cita-acciones">
-                    <button class="btn-reprogramar" onclick="abrirExpediente(${c.paciente_id}, '${c.paciente?.nombre}')">Ver expediente</button>
-                    <button class="btn-reprogramar" onclick="abrirNotas(${c.id}, '${(c.notas || '').replace(/'/g, "\\'")}')">Agregar notas</button>
+                    <button class="btn-reprogramar" onclick="abrirExpediente(${c.paciente_id}, '${esc(c.paciente?.nombre).replace(/'/g, '&#39;')}')">Ver expediente</button>
+                    <button class="btn-reprogramar" onclick="abrirNotas(${c.id})">Agregar notas</button>
                 </div>
             </div>
         `).join('');
@@ -106,13 +119,13 @@ async function cargarHorario() {
 async function abrirExpediente(paciente_id, nombre) {
     pacienteExpedienteId = paciente_id;
     document.getElementById('titulo-expediente').textContent = `Expediente - ${nombre}`;
- 
-    document.getElementById('exp-alergias').value = '';
-    document.getElementById('exp-enfermedades').value = '';
-    document.getElementById('exp-medicamentos').value = '';
-    document.getElementById('exp-antecedentes').value = '';
-    document.getElementById('exp-notas').value = '';
- 
+
+    ['exp-alergias', 'exp-enfermedades', 'exp-medicamentos', 'exp-antecedentes', 'exp-notas'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+
+    initOdontograma({});
+
     try {
         const res = await fetch(`${API}/expedientes/${paciente_id}`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -124,12 +137,13 @@ async function abrirExpediente(paciente_id, nombre) {
             document.getElementById('exp-medicamentos').value = exp.medicamentos || '';
             document.getElementById('exp-antecedentes').value = exp.antecedentes || '';
             document.getElementById('exp-notas').value = exp.notas_generales || '';
+            initOdontograma(exp.odontograma || {});
         }
     } catch (e) {}
- 
+
     document.getElementById('modal-expediente').style.display = 'flex';
 }
- 
+
 async function guardarExpediente() {
     const error = document.getElementById('error-expediente');
     try {
@@ -142,7 +156,8 @@ async function guardarExpediente() {
                 enfermedades: document.getElementById('exp-enfermedades').value,
                 medicamentos: document.getElementById('exp-medicamentos').value,
                 antecedentes: document.getElementById('exp-antecedentes').value,
-                notas_generales: document.getElementById('exp-notas').value
+                notas_generales: document.getElementById('exp-notas').value,
+                odontograma: leerOdontograma()
             })
         });
         if (!res.ok) throw new Error();
@@ -153,9 +168,16 @@ async function guardarExpediente() {
     }
 }
  
-function abrirNotas(cita_id, notas) {
+async function abrirNotas(cita_id) {
     citaNotasId = cita_id;
-    document.getElementById('notas-cita').value = notas;
+    document.getElementById('notas-cita').value = '';
+    try {
+        const res = await fetch(`${API}/citas/${cita_id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+            const cita = await res.json();
+            document.getElementById('notas-cita').value = cita.notas || '';
+        }
+    } catch (e) {}
     document.getElementById('modal-notas').style.display = 'flex';
 }
  
@@ -176,5 +198,201 @@ async function guardarNotas() {
 function cerrarModal(id) {
     document.getElementById(id).style.display = 'none';
 }
- 
+
+// ---------- ODONTOGRAMA ----------
+
+const ESTADOS_DIENTE = ['sano', 'caries', 'obturado', 'extraido', 'corona', 'implante'];
+const COLORES_DIENTE = {
+    sano: '#f9fafb',
+    caries: '#d97706',
+    obturado: '#3b82f6',
+    extraido: '#6b7280',
+    corona: '#f59e0b',
+    implante: '#7c3aed'
+};
+const DIENTES_SUPERIOR = [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
+const DIENTES_INFERIOR = [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
+
+let odontogramaData = {};
+
+function initOdontograma(data) {
+    odontogramaData = { ...data };
+    renderFila('fila-superior', DIENTES_SUPERIOR);
+    renderFila('fila-inferior', DIENTES_INFERIOR);
+}
+
+function renderFila(contenedorId, dientes) {
+    const contenedor = document.getElementById(contenedorId);
+    contenedor.innerHTML = dientes.map(num => {
+        const estado = odontogramaData[num] || 'sano';
+        const color = COLORES_DIENTE[estado];
+        const textColor = ['caries','obturado','extraido','corona','implante'].includes(estado) ? 'white' : '#374151';
+        return `
+            <div onclick="toggleDiente(${num})" title="${num} — ${estado}"
+                style="width:28px; height:32px; border:1px solid #d1d5db; border-radius:4px;
+                    background:${color}; cursor:pointer; display:flex; align-items:center;
+                    justify-content:center; font-size:9px; color:${textColor}; font-weight:600;
+                    transition:all .15s;" id="diente-${num}">
+                ${estado === 'extraido' ? '✕' : num}
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleDiente(num) {
+    const actual = odontogramaData[num] || 'sano';
+    const idx = ESTADOS_DIENTE.indexOf(actual);
+    const siguiente = ESTADOS_DIENTE[(idx + 1) % ESTADOS_DIENTE.length];
+    odontogramaData[num] = siguiente;
+
+    const el = document.getElementById(`diente-${num}`);
+    if (el) {
+        const color = COLORES_DIENTE[siguiente];
+        const textColor = ['caries','obturado','extraido','corona','implante'].includes(siguiente) ? 'white' : '#374151';
+        el.style.background = color;
+        el.style.color = textColor;
+        el.textContent = siguiente === 'extraido' ? '✕' : num;
+        el.title = `${num} — ${siguiente}`;
+    }
+}
+
+function leerOdontograma() {
+    return { ...odontogramaData };
+}
+
+// ---------- PRESUPUESTOS ----------
+
+let serviciosDisponibles = [];
+
+async function cargarPresupuestos() {
+    try {
+        const res = await fetch(`${API}/presupuestos`, { headers: { Authorization: `Bearer ${token}` } });
+        const lista = await res.json();
+        const contenedor = document.getElementById('lista-presupuestos');
+
+        if (!lista.length) {
+            contenedor.innerHTML = '<p style="color:#888;">No hay presupuestos generados.</p>';
+            return;
+        }
+
+        const badgeEstado = e => e === 'aceptado' ? 'confirmada' : e === 'rechazado' ? 'cancelada' : 'pendiente';
+
+        contenedor.innerHTML = `
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Paciente</th><th>Total</th><th>Descuento</th>
+                        <th>Estado</th><th>Fecha</th><th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${lista.map(p => `
+                        <tr>
+                            <td>${esc(p.paciente?.nombre)}</td>
+                            <td>$${Number(p.total).toLocaleString()} MXN</td>
+                            <td>${p.descuento_porcentaje > 0 ? esc(p.descuento_porcentaje) + '%' : '-'}</td>
+                            <td><span class="badge ${badgeEstado(p.estado)}">${esc(p.estado)}</span></td>
+                            <td>${esc(p.creado_en?.slice(0,10))}</td>
+                            <td>
+                                <button class="btn-tabla" onclick="cambiarEstadoPresupuesto(${p.id}, 'aceptado')">Aceptado</button>
+                                <button class="btn-tabla" onclick="cambiarEstadoPresupuesto(${p.id}, 'rechazado')">Rechazado</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    } catch (e) {
+        document.getElementById('lista-presupuestos').innerHTML = '<p style="color:red;">Error al cargar presupuestos.</p>';
+    }
+}
+
+async function abrirModalPresupuesto() {
+    try {
+        const [resPacientes, resServicios] = await Promise.all([
+            fetch(`${API}/pacientes`, { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API}/servicios`)
+        ]);
+        const pacientes = await resPacientes.json();
+        serviciosDisponibles = await resServicios.json();
+
+        document.getElementById('pres-paciente').innerHTML =
+            '<option value="">-- Seleccionar paciente --</option>' +
+            pacientes.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+
+        document.getElementById('pres-descuento').value = 0;
+        document.getElementById('pres-notas').value = '';
+
+        document.getElementById('pres-servicios-lista').innerHTML = serviciosDisponibles.map(s => `
+            <label style="display:flex; align-items:center; gap:10px; font-size:14px; cursor:pointer;">
+                <input type="checkbox" value="${s.id}" data-precio="${s.precio}" data-nombre="${s.nombre}"
+                    onchange="calcularTotalPresupuesto()" style="width:16px; height:16px;">
+                <span>${s.nombre}</span>
+                <span style="color:#6b7280; margin-left:auto;">$${Number(s.precio).toLocaleString()}</span>
+            </label>
+        `).join('');
+
+        calcularTotalPresupuesto();
+        document.getElementById('modal-presupuesto').style.display = 'flex';
+    } catch (e) {
+        alert('Error al cargar datos para el presupuesto.');
+    }
+}
+
+function calcularTotalPresupuesto() {
+    const checks = document.querySelectorAll('#pres-servicios-lista input[type=checkbox]:checked');
+    const descuento = parseInt(document.getElementById('pres-descuento').value) || 0;
+    const subtotal = Array.from(checks).reduce((sum, c) => sum + Number(c.dataset.precio), 0);
+    const descVal = subtotal * descuento / 100;
+    const total = subtotal - descVal;
+
+    document.getElementById('pres-subtotal').textContent = '$' + subtotal.toLocaleString();
+    document.getElementById('pres-desc-val').textContent = '-$' + descVal.toLocaleString();
+    document.getElementById('pres-total').textContent = '$' + total.toLocaleString();
+}
+
+async function guardarPresupuesto() {
+    const paciente_id = document.getElementById('pres-paciente').value;
+    if (!paciente_id) { alert('Selecciona un paciente.'); return; }
+
+    const checks = document.querySelectorAll('#pres-servicios-lista input[type=checkbox]:checked');
+    if (!checks.length) { alert('Selecciona al menos un servicio.'); return; }
+
+    const descuento_porcentaje = parseInt(document.getElementById('pres-descuento').value) || 0;
+    const items = Array.from(checks).map(c => ({ nombre: c.dataset.nombre, precio: Number(c.dataset.precio) }));
+    const subtotal = items.reduce((s, i) => s + i.precio, 0);
+    const total = subtotal * (1 - descuento_porcentaje / 100);
+
+    try {
+        const res = await fetch(`${API}/presupuestos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+                paciente_id: parseInt(paciente_id),
+                doctor_id: usuario.doctor_id,
+                items, total, descuento_porcentaje,
+                notas: document.getElementById('pres-notas').value
+            })
+        });
+        if (!res.ok) { alert('Error al guardar presupuesto.'); return; }
+        cerrarModal('modal-presupuesto');
+        cargarPresupuestos();
+    } catch (e) {
+        alert('Error al conectar con el servidor.');
+    }
+}
+
+async function cambiarEstadoPresupuesto(id, estado) {
+    try {
+        await fetch(`${API}/presupuestos/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ estado })
+        });
+        cargarPresupuestos();
+    } catch (e) {
+        alert('Error al actualizar presupuesto.');
+    }
+}
+
 cargarCitasHoy();

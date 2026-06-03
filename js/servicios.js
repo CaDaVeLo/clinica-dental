@@ -26,6 +26,9 @@ function renderServicios(servicios) {
                 <div class="precio">$${Number(s.precio).toLocaleString()} <span>MXN</span></div>
                 <div class="duracion">${s.duracion_min} min</div>
             </div>
+            <div class="servicio-card-reservar">
+                <a href="agenda-paciente.html" class="servicio-btn-reservar">Reservar este servicio</a>
+            </div>
         </div>
     `).join('');
 }

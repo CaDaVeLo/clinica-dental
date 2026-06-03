@@ -8,62 +8,242 @@
 </head>
 <body>
  
-    <nav>
-        <a href="index.html" class="activo">Inicio</a>
-        <a href="servicios.html">Servicios</a>
-        <a href="mis-citas.html">Mis citas</a>
-        <a href="contacto.html">Contacto</a>
-        <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
+    <nav class="navbar" id="navbar">
+        <a href="index.html" class="navbar-logo">Clínica Dental</a>
+        <div class="navbar-links">
+            <a href="servicios.html">Servicios</a>
+            <a href="mis-citas.html">Mis citas</a>
+            <a href="contacto.html">Contacto</a>
+            <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
+        </div>
     </nav>
  
     <section class="hero">
-        <div class="hero-izquierda">
-            <div class="hero-badge">Clínica Dental &nbsp; Lun-Sáb 11:00 - 18:00</div>
-            <h1>Tu sonrisa merece <span>lo mejor</span></h1>
-            <p>Tratamientos dentales con tecnología de vanguardia, atención personalizada y los mejores especialistas. Agenda en minutos.</p>
+        <div class="hero-bg-circle c1"></div>
+        <div class="hero-bg-circle c2"></div>
+ 
+        <div class="hero-contenido">
+            <div class="hero-badge">
+                <span class="hero-badge-punto"></span>
+                Clínica Dental &nbsp;·&nbsp; Lun-Sáb 11:00 - 18:00
+            </div>
+            <h1>Tu sonrisa<br>merece <em>lo mejor</em></h1>
+            <p>Tratamientos dentales con tecnología de vanguardia, atención personalizada y los mejores especialistas. Agenda tu cita en minutos.</p>
             <div class="hero-botones">
-                <a href="agenda-paciente.html" class="btn-blanco">Reservar Cita</a>
-                <a href="servicios.html" class="btn-outline">Ver Servicios</a>
+                <a href="agenda-paciente.html" class="btn-azul">Reservar Cita</a>
+                <a href="servicios.html" class="btn-borde">Ver Servicios</a>
             </div>
-            <div class="hero-stats">
-                <div>
-                    <span>15 +</span>
-                    <p>Años de experiencia</p>
+            <div class="hero-checks">
+                <div class="hero-check">
+                    <div class="check-icon">✓</div>
+                    <span>Sin filas de espera</span>
                 </div>
-                <div>
-                    <span>8,000 +</span>
-                    <p>Pacientes atendidos</p>
+                <div class="hero-check">
+                    <div class="check-icon">✓</div>
+                    <span>Confirmación inmediata</span>
                 </div>
-                <div>
-                    <span>2</span>
-                    <p>Especialistas</p>
+                <div class="hero-check">
+                    <div class="check-icon">✓</div>
+                    <span>Cancela hasta 24h antes</span>
                 </div>
             </div>
         </div>
+ 
         <div class="hero-derecha">
-            <div class="feature-card">
-                <h3>Diagnostico Dental</h3>
-                <p>Radiografías 3D y análisis para un diagnóstico preciso y sin dolor</p>
+            <div class="hero-img-principal">
+                <div class="hero-img-texto">
+                    <div class="hero-num">8K+</div>
+                    <p>Pacientes satisfechos</p>
+                </div>
             </div>
-            <div class="feature-card">
-                <h3>Estética Avanzada</h3>
-                <p>Blanqueamiento, carillas y diseño de sonrisa personalizado.</p>
+            <div class="card-flotante cf1">
+                <strong>Cita confirmada</strong>
+                Hoy · 10:00 am · Limpieza Dental
             </div>
-            <div class="feature-card">
-                <h3>Garantía Total</h3>
-                <p>Todos nuestros tratamientos incluyen garantía y seguimiento.</p>
+            <div class="card-flotante cf2">
+                <strong>4.9 / 5.0</strong>
+                Calificación de pacientes
             </div>
         </div>
     </section>
  
-    <section class="seccion-servicios">
-        <h2>Nuestros <span>servicios</span></h2>
-        <p>Atención completa para toda la familia con tecnología de punta y precios transparentes.</p>
+    <section class="stats">
+        <div class="stat-item fade-up">
+            <div class="stat-num">15+</div>
+            <div class="stat-label">Años de experiencia</div>
+        </div>
+        <div class="stat-item fade-up" style="transition-delay: 0.1s;">
+            <div class="stat-num">8,000+</div>
+            <div class="stat-label">Pacientes atendidos</div>
+        </div>
+        <div class="stat-item fade-up" style="transition-delay: 0.2s;">
+            <div class="stat-num">2</div>
+            <div class="stat-label">Especialistas certificados</div>
+        </div>
+        <div class="stat-item fade-up" style="transition-delay: 0.3s;">
+            <div class="stat-num">4.9</div>
+            <div class="stat-label">Calificación promedio</div>
+        </div>
     </section>
  
-    <footer style="text-align:center; padding:20px; font-size:13px; color:#999;">
-        <a href="login.html" style="color:#999; text-decoration:none;">Acceso personal</a>
+    <section class="seccion">
+        <div class="seccion-header fade-up">
+            <p class="seccion-etiqueta">NUESTROS SERVICIOS</p>
+            <h2 class="seccion-titulo">Atención completa para <span>toda la familia</span></h2>
+            <p class="seccion-subtitulo">Precios transparentes y horarios flexibles para que cuides tu salud sin complicaciones.</p>
+        </div>
+ 
+        <div class="servicios-grid-home">
+            <div class="servicio-card-home fade-up" style="transition-delay: 0s;">
+                <div class="servicio-icono-home"></div>
+                <h3>Limpieza Dental</h3>
+                <p>Eliminación de placa y sarro con ultrasonido. Incluye pulido y flúor.</p>
+                <div class="servicio-precio-home">
+                    <span class="precio">$800 MXN</span>
+                    <span class="duracion">60 min</span>
+                </div>
+            </div>
+            <div class="servicio-card-home fade-up" style="transition-delay: 0.1s;">
+                <div class="servicio-icono-home"></div>
+                <h3>Diagnóstico Digital</h3>
+                <p>Radiografías digitales y evaluación 3D completa de tu salud bucal.</p>
+                <div class="servicio-precio-home">
+                    <span class="precio">$600 MXN</span>
+                    <span class="duracion">45 min</span>
+                </div>
+            </div>
+            <div class="servicio-card-home fade-up" style="transition-delay: 0.2s;">
+                <div class="servicio-icono-home"></div>
+                <h3>Blanqueamiento</h3>
+                <p>Blanqueamiento profesional con gel activado con luz LED.</p>
+                <div class="servicio-precio-home">
+                    <span class="precio">$2,500 MXN</span>
+                    <span class="duracion">90 min</span>
+                </div>
+            </div>
+            <div class="servicio-card-home fade-up" style="transition-delay: 0.3s;">
+                <div class="servicio-icono-home"></div>
+                <h3>Implante Dental</h3>
+                <p>Implantes de titanio de alta calidad para reemplazar dientes perdidos.</p>
+                <div class="servicio-precio-home">
+                    <span class="precio">$12,000 MXN</span>
+                    <span class="duracion">120 min</span>
+                </div>
+            </div>
+            <div class="servicio-card-home fade-up" style="transition-delay: 0.4s;">
+                <div class="servicio-icono-home"></div>
+                <h3>Ortodoncia</h3>
+                <p>Brackets metálicos, cerámicos y alineadores invisibles.</p>
+                <div class="servicio-precio-home">
+                    <span class="precio">$4,000 MXN</span>
+                    <span class="duracion">60 min</span>
+                </div>
+            </div>
+            <div class="servicio-card-home fade-up" style="transition-delay: 0.5s;">
+                <div class="servicio-icono-home"></div>
+                <h3>Endodoncia</h3>
+                <p>Tratamiento de conducto para salvar dientes con infección grave.</p>
+                <div class="servicio-precio-home">
+                    <span class="precio">$2,500 MXN</span>
+                    <span class="duracion">90 min</span>
+                </div>
+            </div>
+        </div>
+    </section>
+ 
+    <section class="como-funciona">
+        <div class="seccion-header fade-up">
+            <p class="seccion-etiqueta">COMO FUNCIONA</p>
+            <h2 class="seccion-titulo">Agenda tu cita en <span>4 pasos</span></h2>
+            <p class="seccion-subtitulo">Sin llamadas, sin esperas. Todo desde tu celular o computadora.</p>
+        </div>
+ 
+        <div class="pasos-grid">
+            <div class="paso-item fade-up" style="transition-delay: 0s;">
+                <div class="paso-num">1</div>
+                <h3>Tus datos</h3>
+                <p>Ingresa tu nombre, CURP y correo electrónico.</p>
+            </div>
+            <div class="paso-item fade-up" style="transition-delay: 0.15s;">
+                <div class="paso-num">2</div>
+                <h3>Elige el servicio</h3>
+                <p>Selecciona el tratamiento que necesitas.</p>
+            </div>
+            <div class="paso-item fade-up" style="transition-delay: 0.3s;">
+                <div class="paso-num">3</div>
+                <h3>Fecha y hora</h3>
+                <p>Escoge el día y horario disponible que más te convenga.</p>
+            </div>
+            <div class="paso-item fade-up" style="transition-delay: 0.45s;">
+                <div class="paso-num">4</div>
+                <h3>Confirma y listo</h3>
+                <p>Elige cómo pagar y recibe tu confirmación al instante.</p>
+            </div>
+        </div>
+    </section>
+ 
+    <section class="testimonios">
+        <div class="seccion-header fade-up">
+            <p class="seccion-etiqueta">TESTIMONIOS</p>
+            <h2 class="seccion-titulo">Lo que dicen <span>nuestros pacientes</span></h2>
+        </div>
+ 
+        <div class="testimonios-grid">
+            <div class="testimonio-card fade-up" style="transition-delay: 0s;">
+                <div class="estrellas">★★★★★</div>
+                <p class="testimonio-texto">"Agendar mi cita fue rapidísimo. En menos de 2 minutos ya tenía mi confirmación. El sistema es muy fácil de usar."</p>
+                <div class="testimonio-autor">
+                    <div class="autor-avatar">MR</div>
+                    <div>
+                        <div class="autor-nombre">María Rodríguez</div>
+                        <div class="autor-rol">Limpieza Dental</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonio-card fade-up" style="transition-delay: 0.15s;">
+                <div class="estrellas">★★★★★</div>
+                <p class="testimonio-texto">"Excelente atención. El Dr. Barraza es muy profesional y el sistema de citas online me ahorró mucho tiempo."</p>
+                <div class="testimonio-autor">
+                    <div class="autor-avatar">JV</div>
+                    <div>
+                        <div class="autor-nombre">Jorge Velarde</div>
+                        <div class="autor-rol">Ortodoncia</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonio-card fade-up" style="transition-delay: 0.3s;">
+                <div class="estrellas">★★★★★</div>
+                <p class="testimonio-texto">"Me encanta que puedo ver mis citas desde la página y cancelar si necesito sin tener que llamar. Muy práctico."</p>
+                <div class="testimonio-autor">
+                    <div class="autor-avatar">AL</div>
+                    <div>
+                        <div class="autor-nombre">Ana López</div>
+                        <div class="autor-rol">Blanqueamiento</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+ 
+    <section class="cta-final">
+        <h2 class="fade-up">¿Listo para tu próxima cita?</h2>
+        <p class="fade-up" style="transition-delay: 0.1s;">Agenda hoy mismo en menos de 2 minutos. Sin llamadas, sin esperas.</p>
+        <a href="agenda-paciente.html" class="btn-blanco-cta fade-up" style="transition-delay: 0.2s;">Reservar Cita Ahora</a>
+    </section>
+ 
+    <footer class="footer">
+        <div>
+            <strong class="footer-logo">Clínica Dental</strong>
+            <p>Lun-Sáb 11:00 - 18:00 &nbsp;·&nbsp; Av. Principal 123, Culiacán Sinaloa</p>
+        </div>
+        <div class="footer-links">
+            <a href="servicios.html">Servicios</a>
+            <a href="contacto.html">Contacto</a>
+            <a href="login.html">Acceso personal</a>
+        </div>
     </footer>
+ 
+    <script src="js/index.js"></script>
  
 </body>
 </html>

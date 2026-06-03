@@ -8,12 +8,15 @@
 </head>
 <body>
  
-    <nav>
-        <a href="index.html">Inicio</a>
-        <a href="servicios.html">Servicios</a>
-        <a href="mis-citas.html">Mis citas</a>
-        <a href="contacto.html" class="activo">Contacto</a>
-        <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
+    <nav class="navbar">
+            <a href="index.html" class="navbar-logo">Clínica Dental</a>
+
+        <div class="navbar-links">
+            <a href="servicios.html">Servicios</a>
+            <a href="mis-citas.html">Mis citas</a>
+            <a href="contacto.html">Contacto</a>
+            <a href="agenda-paciente.html" class="btn-reservar">Reservar Cita</a>
+        </div>
     </nav>
  
     <div class="contacto-pagina">
@@ -24,7 +27,7 @@
  
             <div class="info-card">
                 <h4>Dirección</h4>
-                <p>Av. Principal 123, Col. Centro<br>Ciudad de México, CP 06600</p>
+                <p>Av. Principal 123, Col. Centro<br>Culiacán Sinaloa, CP 06600</p>
             </div>
  
             <div class="info-card">
@@ -45,26 +48,31 @@
  
         <div class="contacto-derecha">
             <h3>Envianos un mensaje</h3>
- 
+
+            <div id="contacto-exito" style="display:none; background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:16px 20px; margin-bottom:20px; color:#166534; font-size:15px;">
+                ✓ Mensaje enviado correctamente. Te responderemos pronto.
+            </div>
+            <div id="contacto-error" style="display:none; background:#fef2f2; border:1px solid #fca5a5; border-radius:10px; padding:16px 20px; margin-bottom:20px; color:#991b1b; font-size:14px;"></div>
+
             <div class="fila-form">
                 <div class="campo">
                     <label>Nombre completo *</label>
-                    <input type="text" placeholder="Velarde López Carlos Daniel">
+                    <input type="text" id="cnt-nombre" placeholder="Velarde López Carlos Daniel">
                 </div>
                 <div class="campo">
                     <label>Email *</label>
-                    <input type="email" placeholder="Andree@gmail.com">
+                    <input type="email" id="cnt-email" placeholder="Andree@gmail.com">
                 </div>
             </div>
- 
+
             <div class="fila-form">
                 <div class="campo">
-                    <label>Teléfono *</label>
-                    <input type="tel" placeholder="6657325525">
+                    <label>Teléfono</label>
+                    <input type="tel" id="cnt-telefono" placeholder="6657325525">
                 </div>
                 <div class="campo-select campo">
-                    <label>Asunto *</label>
-                    <select>
+                    <label>Asunto</label>
+                    <select id="cnt-asunto">
                         <option value="">Seleccione un tema</option>
                         <option>Información de tratamientos</option>
                         <option>Cotización</option>
@@ -73,15 +81,69 @@
                     </select>
                 </div>
             </div>
- 
+
             <div class="campo-mensaje">
                 <label>Mensaje *</label>
-                <textarea placeholder="Escribe tu mensaje aquí..."></textarea>
+                <textarea id="cnt-mensaje" placeholder="Escribe tu mensaje aquí..."></textarea>
             </div>
- 
-            <button class="btn-enviar">Enviar mensaje</button>
+
+            <button class="btn-enviar" onclick="enviarMensaje()">Enviar mensaje</button>
         </div>
     </div>
- 
+
+    <script>
+        const API = 'http://localhost:3000';
+
+        async function enviarMensaje() {
+            const nombre = document.getElementById('cnt-nombre').value.trim();
+            const email = document.getElementById('cnt-email').value.trim();
+            const telefono = document.getElementById('cnt-telefono').value.trim();
+            const asunto = document.getElementById('cnt-asunto').value;
+            const mensaje = document.getElementById('cnt-mensaje').value.trim();
+
+            const divExito = document.getElementById('contacto-exito');
+            const divError = document.getElementById('contacto-error');
+            divExito.style.display = 'none';
+            divError.style.display = 'none';
+
+            if (!nombre || !email || !mensaje) {
+                divError.style.display = 'block';
+                divError.textContent = 'Por favor completa tu nombre, email y mensaje.';
+                return;
+            }
+
+            const btn = document.querySelector('.btn-enviar');
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+
+            try {
+                const res = await fetch(`${API}/contacto`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, email, telefono, asunto, mensaje })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    divError.style.display = 'block';
+                    divError.textContent = data.error || 'Error al enviar el mensaje.';
+                    return;
+                }
+
+                divExito.style.display = 'block';
+                ['cnt-nombre', 'cnt-email', 'cnt-telefono', 'cnt-mensaje'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+                document.getElementById('cnt-asunto').value = '';
+            } catch (e) {
+                divError.style.display = 'block';
+                divError.textContent = 'No se pudo conectar con el servidor.';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Enviar mensaje';
+            }
+        }
+    </script>
 </body>
 </html>
