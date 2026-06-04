@@ -52,7 +52,9 @@ async function login() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
 
-        if (data.usuario.rol === 'recepcionista') {
+        if (data.usuario.rol === 'admin') {
+            window.location.href = 'panel-admin.html';
+        } else if (data.usuario.rol === 'recepcionista') {
             window.location.href = 'panel-recepcionista.html';
         } else if (data.usuario.rol === 'doctor') {
             window.location.href = 'panel-doctor.html';

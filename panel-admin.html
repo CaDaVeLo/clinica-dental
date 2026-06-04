@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrador - Clínica Dental</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/panel.css">
+    <style>
+        .badge.admin { background:#f3e8ff; color:#7c3aed; }
+        .badge.doctor-rol { background:#dcfce7; color:#16a34a; }
+        .badge.recepcionista-rol { background:#dbeafe; color:#1d4ed8; }
+        .badge.inactivo { background:#f1f5f9; color:#94a3b8; }
+
+        .seccion-header {
+            display:flex; justify-content:space-between; align-items:center;
+            margin-bottom:18px; flex-wrap:wrap; gap:10px;
+        }
+        .seccion-header h2 { font-size:18px; font-weight:700; color:#0f172a; margin:0; }
+
+        .admin-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+        .admin-stat { background:#fff; border-radius:14px; padding:20px 22px; box-shadow:0 1px 6px rgba(0,0,0,.07); }
+        .admin-stat p:first-child { font-size:13px; color:#6b7280; margin-bottom:5px; }
+        .admin-stat p:last-child { font-size:26px; font-weight:800; color:#0f172a; margin:0; }
+
+        .horarios-doctor-select {
+            display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;
+        }
+        .horarios-doctor-select select {
+            border:1px solid #d1d5db; border-radius:8px; padding:9px 14px;
+            font-size:14px; background:#fff; min-width:220px;
+        }
+
+        /* Modal común */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000; align-items:center; justify-content:center; }
+        .modal-box { background:#fff; border-radius:18px; padding:32px; width:100%; max-width:480px; box-shadow:0 20px 60px rgba(0,0,0,.18); max-height:90vh; overflow-y:auto; }
+        .modal-box-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .modal-box-header h3 { font-size:18px; font-weight:700; color:#0f172a; margin:0; }
+        .modal-btn-cerrar { background:none; border:none; font-size:20px; color:#6b7280; cursor:pointer; }
+        .modal-campo { display:flex; flex-direction:column; margin-bottom:14px; }
+        .modal-campo label { font-size:13px; font-weight:600; color:#374151; margin-bottom:5px; }
+        .modal-campo input, .modal-campo select, .modal-campo textarea {
+            border:1.5px solid #e5e7eb; border-radius:9px; padding:10px 13px;
+            font-size:14px; font-family:inherit; outline:none;
+            transition:border-color .2s, box-shadow .2s;
+        }
+        .modal-campo input:focus, .modal-campo select:focus, .modal-campo textarea:focus {
+            border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1);
+        }
+        .modal-fila { display:flex; gap:12px; }
+        .modal-fila .modal-campo { flex:1; }
+        .modal-error { color:#dc2626; font-size:13px; margin-bottom:10px; display:none; }
+        .modal-acciones { display:flex; gap:10px; margin-top:20px; }
+        .btn-guardar {
+            background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff;
+            border:none; border-radius:9px; padding:11px 24px;
+            font-size:14px; font-weight:700; cursor:pointer;
+        }
+        .btn-guardar:hover { opacity:.9; }
+        .btn-cancelar-modal {
+            background:#fff; color:#374151; border:1.5px solid #e5e7eb;
+            border-radius:9px; padding:10px 20px; font-size:14px; font-weight:600; cursor:pointer;
+        }
+
+        .btn-peligro { background:#fee2e2; color:#dc2626; border:none; border-radius:7px; padding:5px 12px; font-size:12px; font-weight:600; cursor:pointer; }
+        .btn-peligro:hover { background:#fecaca; }
+        .btn-warning { background:#fef3c7; color:#d97706; border:none; border-radius:7px; padding:5px 12px; font-size:12px; font-weight:600; cursor:pointer; }
+        .btn-warning:hover { background:#fde68a; }
+
+        .toggle-activo {
+            display:inline-flex; align-items:center; gap:6px;
+            font-size:12px; font-weight:600; padding:5px 12px;
+            border-radius:7px; border:none; cursor:pointer;
+        }
+        .toggle-activo.on  { background:#dcfce7; color:#16a34a; }
+        .toggle-activo.off { background:#fee2e2; color:#dc2626; }
+
+        @media(max-width:600px){
+            .modal-fila { flex-direction:column; }
+            .modal-box { padding:22px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menú">&#9776;</button>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="panel-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">Clínica Dental</div>
+            <p class="sidebar-rol">Administrador</p>
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-link activo" onclick="mostrarSeccion('resumen', this)">Resumen</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('doctores', this)">Doctores</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('horarios', this)">Horarios</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('servicios', this)">Servicios</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('usuarios', this)">Usuarios</a>
+            </nav>
+            <button class="btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar sesión</button>
+        </aside>
+
+        <main class="panel-contenido">
+            <div class="panel-header">
+                <h1 id="titulo-seccion">Resumen</h1>
+                <span id="nombre-usuario"></span>
+            </div>
+
+            <!-- RESUMEN -->
+            <div id="seccion-resumen">
+                <div id="contenido-resumen"><p style="color:#888;">Cargando...</p></div>
+            </div>
+
+            <!-- DOCTORES -->
+            <div id="seccion-doctores" style="display:none;">
+                <div class="seccion-header">
+                    <h2>Gestión de Doctores</h2>
+                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="abrirModalDoctor()">+ Nuevo doctor</button>
+                </div>
+                <div id="tabla-doctores" class="tabla-wrap"></div>
+            </div>
+
+            <!-- HORARIOS -->
+            <div id="seccion-horarios" style="display:none;">
+                <div class="seccion-header">
+                    <h2>Horarios de Doctores</h2>
+                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="abrirModalHorario()">+ Agregar horario</button>
+                </div>
+                <div class="horarios-doctor-select">
+                    <label style="font-size:14px; font-weight:600; color:#374151;">Filtrar por doctor:</label>
+                    <select id="filtro-doctor-horario" onchange="cargarHorarios()">
+                        <option value="">Todos los doctores</option>
+                    </select>
+                </div>
+                <div id="tabla-horarios" class="tabla-wrap"></div>
+            </div>
+
+            <!-- SERVICIOS -->
+            <div id="seccion-servicios" style="display:none;">
+                <div class="seccion-header">
+                    <h2>Gestión de Servicios</h2>
+                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="abrirModalServicio()">+ Nuevo servicio</button>
+                </div>
+                <div id="tabla-servicios" class="tabla-wrap"></div>
+            </div>
+
+            <!-- USUARIOS -->
+            <div id="seccion-usuarios" style="display:none;">
+                <div class="seccion-header">
+                    <h2>Gestión de Usuarios</h2>
+                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="abrirModalUsuario()">+ Nuevo usuario</button>
+                </div>
+                <div id="tabla-usuarios" class="tabla-wrap"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ══ MODAL: DOCTOR ══ -->
+    <div id="modal-doctor" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-box-header">
+                <h3 id="modal-doctor-titulo">Nuevo doctor</h3>
+                <button onclick="cerrarModal('modal-doctor')" class="modal-btn-cerrar">✕</button>
+            </div>
+            <div class="modal-campo">
+                <label>Nombre completo *</label>
+                <input type="text" id="doc-nombre" placeholder="Dr. Juan Pérez">
+            </div>
+            <div class="modal-campo">
+                <label>Especialidad</label>
+                <input type="text" id="doc-especialidad" placeholder="Odontología general">
+            </div>
+            <div class="modal-fila">
+                <div class="modal-campo">
+                    <label>Email</label>
+                    <input type="email" id="doc-email" placeholder="doctor@clinica.com">
+                </div>
+                <div class="modal-campo">
+                    <label>Teléfono</label>
+                    <input type="tel" id="doc-telefono" placeholder="6651234567">
+                </div>
+            </div>
+            <div id="error-doctor" class="modal-error"></div>
+            <div class="modal-acciones">
+                <button class="btn-guardar" onclick="guardarDoctor()">Guardar</button>
+                <button class="btn-cancelar-modal" onclick="cerrarModal('modal-doctor')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ MODAL: HORARIO ══ -->
+    <div id="modal-horario" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-box-header">
+                <h3>Agregar horario</h3>
+                <button onclick="cerrarModal('modal-horario')" class="modal-btn-cerrar">✕</button>
+            </div>
+            <div class="modal-campo">
+                <label>Doctor *</label>
+                <select id="hor-doctor"></select>
+            </div>
+            <div class="modal-campo">
+                <label>Día de la semana *</label>
+                <select id="hor-dia">
+                    <option value="1">Lunes</option>
+                    <option value="2">Martes</option>
+                    <option value="3">Miércoles</option>
+                    <option value="4">Jueves</option>
+                    <option value="5">Viernes</option>
+                    <option value="6">Sábado</option>
+                </select>
+            </div>
+            <div class="modal-fila">
+                <div class="modal-campo">
+                    <label>Hora inicio *</label>
+                    <input type="time" id="hor-inicio">
+                </div>
+                <div class="modal-campo">
+                    <label>Hora fin *</label>
+                    <input type="time" id="hor-fin">
+                </div>
+            </div>
+            <div id="error-horario" class="modal-error"></div>
+            <div class="modal-acciones">
+                <button class="btn-guardar" onclick="guardarHorario()">Guardar</button>
+                <button class="btn-cancelar-modal" onclick="cerrarModal('modal-horario')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ MODAL: SERVICIO ══ -->
+    <div id="modal-servicio" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-box-header">
+                <h3 id="modal-servicio-titulo">Nuevo servicio</h3>
+                <button onclick="cerrarModal('modal-servicio')" class="modal-btn-cerrar">✕</button>
+            </div>
+            <div class="modal-campo">
+                <label>Nombre *</label>
+                <input type="text" id="srv-nombre" placeholder="Limpieza dental">
+            </div>
+            <div class="modal-campo">
+                <label>Descripción</label>
+                <textarea id="srv-descripcion" rows="2" placeholder="Descripción del servicio..."></textarea>
+            </div>
+            <div class="modal-fila">
+                <div class="modal-campo">
+                    <label>Categoría</label>
+                    <input type="text" id="srv-categoria" placeholder="Preventiva">
+                </div>
+                <div class="modal-campo">
+                    <label>Duración (min) *</label>
+                    <input type="number" id="srv-duracion" placeholder="30" min="5">
+                </div>
+            </div>
+            <div class="modal-fila">
+                <div class="modal-campo">
+                    <label>Precio (MXN) *</label>
+                    <input type="number" id="srv-precio" placeholder="500" min="0" step="0.01">
+                </div>
+                <div class="modal-campo">
+                    <label>Ícono (emoji)</label>
+                    <input type="text" id="srv-icono" placeholder="🦷" maxlength="4">
+                </div>
+            </div>
+            <div id="error-servicio" class="modal-error"></div>
+            <div class="modal-acciones">
+                <button class="btn-guardar" onclick="guardarServicio()">Guardar</button>
+                <button class="btn-cancelar-modal" onclick="cerrarModal('modal-servicio')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ MODAL: USUARIO ══ -->
+    <div id="modal-usuario" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-box-header">
+                <h3 id="modal-usuario-titulo">Nuevo usuario</h3>
+                <button onclick="cerrarModal('modal-usuario')" class="modal-btn-cerrar">✕</button>
+            </div>
+            <div class="modal-campo">
+                <label>Nombre completo *</label>
+                <input type="text" id="usr-nombre" placeholder="María López">
+            </div>
+            <div class="modal-campo">
+                <label>Email *</label>
+                <input type="email" id="usr-email" placeholder="usuario@clinica.com">
+            </div>
+            <div class="modal-campo" id="campo-password">
+                <label>Contraseña *</label>
+                <input type="password" id="usr-password" placeholder="Mínimo 6 caracteres">
+            </div>
+            <div class="modal-campo">
+                <label>Rol *</label>
+                <select id="usr-rol" onchange="toggleCampoDoctor()">
+                    <option value="recepcionista">Recepcionista</option>
+                    <option value="doctor">Doctor</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+            <div class="modal-campo" id="campo-doctor-vinculo" style="display:none;">
+                <label>Doctor vinculado</label>
+                <select id="usr-doctor-id">
+                    <option value="">— Sin vincular —</option>
+                </select>
+            </div>
+            <div id="error-usuario" class="modal-error"></div>
+            <div class="modal-acciones">
+                <button class="btn-guardar" onclick="guardarUsuario()">Guardar</button>
+                <button class="btn-cancelar-modal" onclick="cerrarModal('modal-usuario')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ MODAL: CAMBIAR CONTRASEÑA ══ -->
+    <div id="modal-password" class="modal-overlay">
+        <div class="modal-box" style="max-width:380px;">
+            <div class="modal-box-header">
+                <h3>Cambiar contraseña</h3>
+                <button onclick="cerrarModal('modal-password')" class="modal-btn-cerrar">✕</button>
+            </div>
+            <p id="pass-usuario-nombre" style="font-size:14px; color:#6b7280; margin-bottom:16px;"></p>
+            <div class="modal-campo">
+                <label>Nueva contraseña *</label>
+                <input type="password" id="nueva-password" placeholder="Mínimo 6 caracteres">
+            </div>
+            <div id="error-password" class="modal-error"></div>
+            <div class="modal-acciones">
+                <button class="btn-guardar" onclick="guardarPassword()">Cambiar contraseña</button>
+                <button class="btn-cancelar-modal" onclick="cerrarModal('modal-password')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/panel-admin.js"></script>
+    <script>
+        (function() {
+            const toggle = document.getElementById('sidebar-toggle');
+            const overlay = document.getElementById('sidebar-overlay');
+            const sidebar = document.getElementById('sidebar');
+            if (!toggle) return;
+            toggle.addEventListener('click', function() {
+                sidebar.classList.toggle('abierto');
+                overlay.classList.toggle('activo');
+            });
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('abierto');
+                overlay.classList.remove('activo');
+            });
+        })();
+    </script>
+</body>
+</html>

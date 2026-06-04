@@ -104,9 +104,11 @@ async function cargarCitas(fechaParam) {
 }
 
 function renderTablaCitas(citas) {
-    const sorted = [...citas].sort((a, b) =>
-        ordenCitas === 'desc' ? b.id - a.id : a.id - b.id
-    );
+    const sorted = [...citas].sort((a, b) => {
+        const fa = `${a.fecha}T${a.hora || '00:00:00'}`;
+        const fb = `${b.fecha}T${b.hora || '00:00:00'}`;
+        return ordenCitas === 'desc' ? fb.localeCompare(fa) : fa.localeCompare(fb);
+    });
 
     document.getElementById('tabla-citas').innerHTML = `
         <table class="tabla">
