@@ -117,6 +117,10 @@
                 <a href="#" class="sidebar-link" onclick="mostrarSeccion('horarios', this)">Horarios</a>
                 <a href="#" class="sidebar-link" onclick="mostrarSeccion('servicios', this)">Servicios</a>
                 <a href="#" class="sidebar-link" onclick="mostrarSeccion('usuarios', this)">Usuarios</a>
+                <a href="#" class="sidebar-link" onclick="mostrarSeccion('papelera', this)"
+                    style="margin-top:16px;border-top:1px solid rgba(255,255,255,.15);padding-top:14px;">
+                    <i class="fa-solid fa-trash-can-arrow-up" style="margin-right:6px;"></i>Papelera
+                </a>
             </nav>
             <button class="btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar sesión</button>
         </aside>
@@ -163,6 +167,12 @@
                     <button class="btn-siguiente" style="padding:10px 20px;" onclick="abrirModalServicio()">+ Nuevo servicio</button>
                 </div>
                 <div id="tabla-servicios" class="tabla-wrap"></div>
+            </div>
+
+            <!-- PAPELERA -->
+            <div id="seccion-papelera" style="display:none;">
+                <div id="tabs-papelera" style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:20px;gap:0;"></div>
+                <div id="contenido-papelera" class="tabla-wrap"></div>
             </div>
 
             <!-- USUARIOS -->
@@ -333,27 +343,45 @@
         </div>
     </div>
 
-    <!-- ══ MODAL: CONFIRMAR ELIMINACIÓN ══ -->
-    <div id="modal-confirmar-eliminar" class="modal-overlay">
-        <div class="modal-box" style="max-width:440px;">
-            <div class="modal-box-header">
-                <h3 style="color:#dc2626;"><i class="fa-solid fa-trash" style="margin-right:8px;"></i>Eliminar registro</h3>
-                <button onclick="cerrarModal('modal-confirmar-eliminar')" class="modal-btn-cerrar">✕</button>
+    <!-- ══ MODAL: ACCIÓN ADMIN UNIFICADO ══ -->
+    <div id="modal-accion-admin" class="modal-overlay">
+        <div class="modal-box" style="max-width:440px;text-align:center;position:relative;">
+            <button onclick="cerrarModal('modal-accion-admin')" class="modal-btn-cerrar"
+                style="position:absolute;top:14px;right:18px;font-size:18px;">✕</button>
+
+            <!-- Icono dinámico -->
+            <div id="aaa-icono" style="margin:0 auto 18px;"></div>
+
+            <!-- Título y descripción dinámicos -->
+            <h3 id="aaa-titulo" style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 8px;"></h3>
+            <p id="aaa-desc" style="font-size:14px;color:#6b7280;margin:0 0 14px;line-height:1.6;"></p>
+
+            <!-- Aviso (solo para eliminaciones) -->
+            <div id="aaa-aviso" style="display:none;background:#fef2f2;border:1px solid #fecaca;
+                 border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:left;">
+                <p style="margin:0;font-size:13px;color:#991b1b;display:flex;align-items:flex-start;gap:7px;">
+                    <i class="fa-solid fa-triangle-exclamation" style="margin-top:2px;flex-shrink:0;"></i>
+                    <span id="aaa-aviso-texto"></span>
+                </p>
             </div>
-            <div id="confirmar-eliminar-mensaje"></div>
-            <div class="modal-campo">
+
+            <!-- Password -->
+            <div class="modal-campo" style="text-align:left;">
                 <label>Contraseña de administrador *</label>
-                <input type="password" id="confirmar-password-admin" placeholder="Ingresa tu contraseña para confirmar"
-                    onkeydown="if(event.key==='Enter') ejecutarEliminar()">
+                <input type="password" id="aaa-password"
+                    placeholder="Ingresa tu contraseña para confirmar"
+                    onkeydown="if(event.key==='Enter') ejecutarAccionAdmin()">
             </div>
-            <div id="error-confirmar-eliminar" class="modal-error"></div>
-            <div class="modal-acciones">
-                <button id="btn-ejecutar-eliminar" class="btn-peligro"
-                    style="padding:10px 20px; font-size:14px; border-radius:9px;"
-                    onclick="ejecutarEliminar()">
-                    Eliminar permanentemente
+            <div id="aaa-error" class="modal-error"></div>
+
+            <!-- Botones -->
+            <div class="modal-acciones" style="margin-top:20px;">
+                <button id="aaa-btn" onclick="ejecutarAccionAdmin()"
+                    style="padding:11px 20px;border:none;border-radius:9px;font-size:14px;
+                           font-weight:700;cursor:pointer;color:#fff;
+                           display:inline-flex;align-items:center;gap:7px;">
                 </button>
-                <button class="btn-cancelar-modal" onclick="cerrarModal('modal-confirmar-eliminar')">Cancelar</button>
+                <button class="btn-cancelar-modal" onclick="cerrarModal('modal-accion-admin')">Cancelar</button>
             </div>
         </div>
     </div>

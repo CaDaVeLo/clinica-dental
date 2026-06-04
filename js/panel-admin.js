@@ -29,12 +29,12 @@ function mostrarSeccion(seccion, link) {
     document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('activo'));
     link.classList.add('activo');
 
-    ['resumen','doctores','horarios','servicios','usuarios'].forEach(s => {
+    ['resumen','doctores','horarios','servicios','usuarios','papelera'].forEach(s => {
         const el = document.getElementById(`seccion-${s}`);
         if (el) el.style.display = 'none';
     });
 
-    const titulos = { resumen:'Resumen', doctores:'Doctores', horarios:'Horarios', servicios:'Servicios', usuarios:'Usuarios' };
+    const titulos = { resumen:'Resumen', doctores:'Doctores', horarios:'Horarios', servicios:'Servicios', usuarios:'Usuarios', papelera:'Papelera' };
     document.getElementById('titulo-seccion').textContent = titulos[seccion] || seccion;
     document.getElementById(`seccion-${seccion}`).style.display = 'block';
 
@@ -43,6 +43,7 @@ function mostrarSeccion(seccion, link) {
     if (seccion === 'horarios')  { cargarDoctoresEnSelects(); cargarHorarios(); }
     if (seccion === 'servicios') cargarServicios();
     if (seccion === 'usuarios')  cargarUsuarios();
+    if (seccion === 'papelera')  cargarPapelera();
 }
 
 // ══════════════════════════════════════════
@@ -198,84 +199,243 @@ async function cargarResumen() {
 }
 
 // ══════════════════════════════════════════
-// CONFIRMAR ELIMINACIÓN (modal reutilizable)
+// MODAL ACCIÓN ADMIN — UNIFICADO
 // ══════════════════════════════════════════
 
-let pendienteEliminar = { tipo: null, id: null };
+let pendienteAccionAdmin = null; // async function(passwordAdmin)
 
-function abrirConfirmEliminar(tipo, id, nombre) {
-    pendienteEliminar = { tipo, id };
+function abrirConfirmAdmin({ iconClass, iconColor, bgColor, borderColor,
+                              btnColor, btnText, titulo, desc, aviso = null }) {
+    document.getElementById('aaa-icono').innerHTML = `
+        <div style="width:64px;height:64px;border-radius:50%;background:${bgColor};border:2px solid ${borderColor};
+                    display:flex;align-items:center;justify-content:center;margin:auto;">
+            <i class="fa-solid ${iconClass}" style="font-size:26px;color:${iconColor};"></i>
+        </div>`;
+    document.getElementById('aaa-titulo').textContent = titulo;
+    document.getElementById('aaa-desc').innerHTML = desc;
 
-    const mensajes = {
-        servicio: `¿Eliminar permanentemente el servicio <strong>"${esc(nombre)}"</strong>?<br>
-                   Solo es posible si no tiene citas registradas. Si el servicio tiene citas, desactívalo en su lugar.`,
-        doctor:   `¿Eliminar permanentemente al doctor <strong>"${esc(nombre)}"</strong>?<br>
-                   Solo es posible si no tiene citas registradas. Sus horarios también serán eliminados.`,
-        horario:  `¿Eliminar permanentemente este bloque de horario?<br>
-                   Los pacientes no podrán agendar en este horario.`,
-        usuario:  `¿Eliminar permanentemente al usuario <strong>"${esc(nombre)}"</strong>?<br>
-                   Esta acción no se puede deshacer.`
-    };
+    const avisoEl = document.getElementById('aaa-aviso');
+    if (aviso) {
+        document.getElementById('aaa-aviso-texto').textContent = aviso;
+        avisoEl.style.display = 'block';
+    } else {
+        avisoEl.style.display = 'none';
+    }
 
-    document.getElementById('confirmar-eliminar-mensaje').innerHTML = `
-        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:16px;color:#991b1b;font-size:14px;line-height:1.6;">
-            <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i>${mensajes[tipo] || '¿Confirmar eliminación?'}
-        </div>
-    `;
-    document.getElementById('confirmar-password-admin').value = '';
-    document.getElementById('error-confirmar-eliminar').style.display = 'none';
-    document.getElementById('modal-confirmar-eliminar').style.display = 'flex';
+    document.getElementById('aaa-password').value = '';
+    document.getElementById('aaa-error').style.display = 'none';
+
+    const btn = document.getElementById('aaa-btn');
+    btn.style.background = btnColor;
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${btnText}`;
+
+    document.getElementById('modal-accion-admin').style.display = 'flex';
+    setTimeout(() => document.getElementById('aaa-password').focus(), 100);
 }
 
-async function ejecutarEliminar() {
-    const passwordAdmin = document.getElementById('confirmar-password-admin').value;
-    const errDiv = document.getElementById('error-confirmar-eliminar');
+async function ejecutarAccionAdmin() {
+    const password = document.getElementById('aaa-password').value;
+    const errDiv   = document.getElementById('aaa-error');
     errDiv.style.display = 'none';
 
-    if (!passwordAdmin) {
+    if (!password) {
         errDiv.style.display = 'block';
-        errDiv.textContent = 'La contraseña de administrador es obligatoria.';
+        errDiv.textContent = 'La contraseña es obligatoria.';
         return;
     }
 
-    const endpoints = {
-        servicio: `${API}/servicios/${pendienteEliminar.id}`,
-        doctor:   `${API}/doctores/${pendienteEliminar.id}`,
-        horario:  `${API}/horarios/${pendienteEliminar.id}`,
-        usuario:  `${API}/usuarios/${pendienteEliminar.id}`
-    };
-
-    const url = endpoints[pendienteEliminar.tipo];
-    if (!url) return;
-
-    const btn = document.getElementById('btn-ejecutar-eliminar');
+    const btn = document.getElementById('aaa-btn');
+    const textoOriginal = btn.innerHTML;
     btn.disabled = true;
-    btn.textContent = 'Eliminando...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
 
     try {
-        const res = await fetch(url, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ passwordAdmin })
-        });
-        const d = await res.json();
-        if (!res.ok) {
-            errDiv.style.display = 'block';
-            errDiv.textContent = d.error || 'Error al eliminar.';
-            return;
-        }
-        cerrarModal('modal-confirmar-eliminar');
-        if (pendienteEliminar.tipo === 'servicio') cargarServicios();
-        if (pendienteEliminar.tipo === 'doctor')   cargarDoctores();
-        if (pendienteEliminar.tipo === 'horario')  cargarHorarios();
-        if (pendienteEliminar.tipo === 'usuario')  cargarUsuarios();
+        await pendienteAccionAdmin(password);
+        cerrarModal('modal-accion-admin');
     } catch (e) {
         errDiv.style.display = 'block';
-        errDiv.textContent = 'Error al conectar con el servidor.';
-    } finally {
+        errDiv.textContent = e.message || 'Error al procesar la acción.';
         btn.disabled = false;
-        btn.textContent = 'Eliminar permanentemente';
+        btn.innerHTML = textoOriginal;
     }
+}
+
+async function verificarPwdAdmin(password) {
+    const res = await fetch(`${API}/admin/verificar-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ passwordAdmin: password })
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Contraseña incorrecta.'); }
+}
+
+// ── Doctores ──
+function confirmarEditarDoctor(id) {
+    const d = todosDoctores.find(x => x.id === id);
+    pendienteAccionAdmin = async (pwd) => {
+        await verificarPwdAdmin(pwd);
+        cerrarModal('modal-accion-admin');
+        abrirModalDoctor(id);
+    };
+    abrirConfirmAdmin({
+        iconClass: 'fa-pen-to-square', iconColor: '#2563eb',
+        bgColor: '#eff6ff', borderColor: '#bfdbfe', btnColor: '#2563eb',
+        btnText: 'Confirmar y editar',
+        titulo: 'Editar doctor',
+        desc: `Confirma tu identidad para editar la información de <strong>${esc(d?.nombre || '')}</strong>.`
+    });
+}
+
+function confirmarToggleDoctor(id, activo, nombre) {
+    const des = activo;
+    pendienteAccionAdmin = async (pwd) => {
+        await verificarPwdAdmin(pwd);
+        const res = await fetch(`${API}/doctores/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ activo: !activo })
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+        cargarDoctores();
+    };
+    abrirConfirmAdmin({
+        iconClass: des ? 'fa-toggle-off' : 'fa-toggle-on',
+        iconColor: des ? '#d97706' : '#16a34a',
+        bgColor:   des ? '#fef3c7' : '#dcfce7',
+        borderColor: des ? '#fde68a' : '#bbf7d0',
+        btnColor: des ? '#d97706' : '#16a34a',
+        btnText: des ? 'Confirmar y desactivar' : 'Confirmar y activar',
+        titulo: des ? 'Desactivar doctor' : 'Activar doctor',
+        desc: des
+            ? `El doctor <strong>${esc(nombre)}</strong> dejará de aparecer disponible para citas.`
+            : `El doctor <strong>${esc(nombre)}</strong> volverá a estar disponible para citas.`
+    });
+}
+
+function confirmarEliminarDoctor(id, nombre) {
+    pendienteAccionAdmin = async (pwd) => {
+        const res = await fetch(`${API}/doctores/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ passwordAdmin: pwd })
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+        cargarDoctores();
+    };
+    abrirConfirmAdmin({
+        iconClass: 'fa-trash-can', iconColor: '#dc2626',
+        bgColor: '#fef2f2', borderColor: '#fecaca', btnColor: '#dc2626',
+        btnText: 'Eliminar permanentemente',
+        titulo: 'Eliminar doctor',
+        desc: `¿Eliminar al doctor <strong>"${esc(nombre)}"</strong>?`,
+        aviso: 'Solo es posible si no tiene citas registradas. Sus horarios también serán eliminados.'
+    });
+}
+
+// ── Horarios ──
+function confirmarEliminarHorario(id) {
+    pendienteAccionAdmin = async (pwd) => {
+        const res = await fetch(`${API}/horarios/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ passwordAdmin: pwd })
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+        cargarHorarios();
+    };
+    abrirConfirmAdmin({
+        iconClass: 'fa-calendar-xmark', iconColor: '#dc2626',
+        bgColor: '#fef2f2', borderColor: '#fecaca', btnColor: '#dc2626',
+        btnText: 'Eliminar horario',
+        titulo: 'Eliminar bloque de horario',
+        desc: '¿Eliminar permanentemente este bloque horario?',
+        aviso: 'Los pacientes no podrán agendar en este horario. Esta acción no se puede deshacer.'
+    });
+}
+
+// ── Servicios ──
+function confirmarEditarServicio(id) {
+    const s = todosServicios.find(x => x.id === id);
+    pendienteAccionAdmin = async (pwd) => {
+        await verificarPwdAdmin(pwd);
+        cerrarModal('modal-accion-admin');
+        abrirModalServicio(id);
+    };
+    abrirConfirmAdmin({
+        iconClass: 'fa-pen-to-square', iconColor: '#2563eb',
+        bgColor: '#eff6ff', borderColor: '#bfdbfe', btnColor: '#2563eb',
+        btnText: 'Confirmar y editar',
+        titulo: 'Editar servicio',
+        desc: `Confirma tu identidad para editar el servicio <strong>${esc(s?.nombre || '')}</strong>.`
+    });
+}
+
+function confirmarToggleServicio(id, activo, nombre) {
+    const des = activo;
+    pendienteAccionAdmin = async (pwd) => {
+        await verificarPwdAdmin(pwd);
+        const res = await fetch(`${API}/servicios/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ activo: !activo })
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+        cargarServicios();
+    };
+    abrirConfirmAdmin({
+        iconClass: des ? 'fa-toggle-off' : 'fa-toggle-on',
+        iconColor: des ? '#d97706' : '#16a34a',
+        bgColor:   des ? '#fef3c7' : '#dcfce7',
+        borderColor: des ? '#fde68a' : '#bbf7d0',
+        btnColor: des ? '#d97706' : '#16a34a',
+        btnText: des ? 'Confirmar y desactivar' : 'Confirmar y activar',
+        titulo: des ? 'Desactivar servicio' : 'Activar servicio',
+        desc: des
+            ? `El servicio <strong>${esc(nombre)}</strong> dejará de aparecer en el catálogo de citas.`
+            : `El servicio <strong>${esc(nombre)}</strong> volverá a estar disponible en el catálogo.`
+    });
+}
+
+function confirmarEliminarServicio(id, nombre) {
+    pendienteAccionAdmin = async (pwd) => {
+        const res = await fetch(`${API}/servicios/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ passwordAdmin: pwd })
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+        cargarServicios();
+    };
+    abrirConfirmAdmin({
+        iconClass: 'fa-trash-can', iconColor: '#dc2626',
+        bgColor: '#fef2f2', borderColor: '#fecaca', btnColor: '#dc2626',
+        btnText: 'Eliminar permanentemente',
+        titulo: 'Eliminar servicio',
+        desc: `¿Eliminar el servicio <strong>"${esc(nombre)}"</strong>?`,
+        aviso: 'Solo es posible si no tiene citas registradas. Desactívalo si solo quieres ocultarlo temporalmente.'
+    });
+}
+
+// ── Usuarios ──
+function confirmarEliminarUsuario(id, nombre) {
+    pendienteAccionAdmin = async (pwd) => {
+        const res = await fetch(`${API}/usuarios/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ passwordAdmin: pwd })
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+        cargarUsuarios();
+    };
+    abrirConfirmAdmin({
+        iconClass: 'fa-user-slash', iconColor: '#dc2626',
+        bgColor: '#fef2f2', borderColor: '#fecaca', btnColor: '#dc2626',
+        btnText: 'Eliminar usuario',
+        titulo: 'Eliminar usuario',
+        desc: `¿Eliminar permanentemente al usuario <strong>"${esc(nombre)}"</strong>?`,
+        aviso: 'Esta acción no se puede deshacer. Los registros vinculados se conservarán.'
+    });
 }
 
 // ══════════════════════════════════════════
@@ -320,12 +480,16 @@ function renderTablaDoctores() {
                             </span>
                         </td>
                         <td style="display:flex; gap:6px; flex-wrap:wrap;">
-                            <button class="btn-tabla" onclick="abrirModalDoctor(${d.id})">Editar</button>
-                            <button class="toggle-activo ${d.activo ? 'on' : 'off'}"
-                                onclick="toggleDoctor(${d.id}, ${d.activo})">
-                                ${d.activo ? 'Desactivar' : 'Activar'}
+                            <button class="btn-tabla" onclick="confirmarEditarDoctor(${d.id})">
+                                <i class="fa-solid fa-pen-to-square" style="font-size:11px;margin-right:4px;"></i>Editar
                             </button>
-                            <button class="btn-peligro" onclick="abrirConfirmEliminar('doctor', ${d.id}, '${esc(d.nombre)}')">Eliminar</button>
+                            <button class="toggle-activo ${d.activo ? 'on' : 'off'}"
+                                onclick="confirmarToggleDoctor(${d.id}, ${d.activo}, '${esc(d.nombre)}')">
+                                ${d.activo ? '<i class="fa-solid fa-toggle-off" style="font-size:11px;margin-right:4px;"></i>Desactivar' : '<i class="fa-solid fa-toggle-on" style="font-size:11px;margin-right:4px;"></i>Activar'}
+                            </button>
+                            <button class="btn-peligro" onclick="confirmarEliminarDoctor(${d.id}, '${esc(d.nombre)}')">
+                                <i class="fa-solid fa-trash-can" style="font-size:11px;margin-right:4px;"></i>Eliminar
+                            </button>
                         </td>
                     </tr>
                 `).join('')}
@@ -458,7 +622,9 @@ async function cargarHorarios() {
                             <td>${esc(h.hora_fin?.slice(0,5))}</td>
                             <td><span class="badge ${h.activo ? 'confirmada' : 'inactivo'}">${h.activo ? 'Activo' : 'Inactivo'}</span></td>
                             <td>
-                                <button class="btn-peligro" onclick="abrirConfirmEliminar('horario', ${h.id}, '')">Eliminar</button>
+                                <button class="btn-peligro" onclick="confirmarEliminarHorario(${h.id})">
+                                    <i class="fa-solid fa-calendar-xmark" style="font-size:11px;margin-right:4px;"></i>Eliminar
+                                </button>
                             </td>
                         </tr>
                     `).join('')}
@@ -525,7 +691,7 @@ let todosServicios = [];
 
 async function cargarServicios() {
     try {
-        const res = await fetch(`${API}/servicios`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`${API}/servicios?todos=true`, { headers: { Authorization: `Bearer ${token}` } });
         todosServicios = await res.json();
         renderTablaServicios();
     } catch (e) {
@@ -559,12 +725,16 @@ function renderTablaServicios() {
                             </span>
                         </td>
                         <td style="display:flex; gap:6px; flex-wrap:wrap;">
-                            <button class="btn-tabla" onclick="abrirModalServicio(${s.id})">Editar</button>
-                            <button class="toggle-activo ${s.activo ? 'on' : 'off'}"
-                                onclick="toggleServicio(${s.id}, ${s.activo})">
-                                ${s.activo ? 'Desactivar' : 'Activar'}
+                            <button class="btn-tabla" onclick="confirmarEditarServicio(${s.id})">
+                                <i class="fa-solid fa-pen-to-square" style="font-size:11px;margin-right:4px;"></i>Editar
                             </button>
-                            <button class="btn-peligro" onclick="abrirConfirmEliminar('servicio', ${s.id}, '${esc(s.nombre)}')">Eliminar</button>
+                            <button class="toggle-activo ${s.activo ? 'on' : 'off'}"
+                                onclick="confirmarToggleServicio(${s.id}, ${s.activo}, '${esc(s.nombre)}')">
+                                ${s.activo ? '<i class="fa-solid fa-toggle-off" style="font-size:11px;margin-right:4px;"></i>Desactivar' : '<i class="fa-solid fa-toggle-on" style="font-size:11px;margin-right:4px;"></i>Activar'}
+                            </button>
+                            <button class="btn-peligro" onclick="confirmarEliminarServicio(${s.id}, '${esc(s.nombre)}')">
+                                <i class="fa-solid fa-trash-can" style="font-size:11px;margin-right:4px;"></i>Eliminar
+                            </button>
                         </td>
                     </tr>
                 `).join('')}
@@ -711,7 +881,9 @@ function renderTablaUsuarios() {
                         <td style="display:flex; gap:6px; flex-wrap:wrap;">
                             <button class="btn-tabla" onclick="abrirModalUsuario(${u.id})">Editar</button>
                             <button class="btn-warning" onclick="abrirCambiarPassword(${u.id}, '${esc(u.nombre)}')">Contraseña</button>
-                            ${u.rol !== 'admin' ? `<button class="btn-peligro" onclick="abrirConfirmEliminar('usuario', ${u.id}, '${esc(u.nombre)}')">Eliminar</button>` : ''}
+                            ${u.rol !== 'admin' ? `<button class="btn-peligro" onclick="confirmarEliminarUsuario(${u.id}, '${esc(u.nombre)}')">
+                                <i class="fa-solid fa-user-slash" style="font-size:11px;margin-right:4px;"></i>Eliminar
+                            </button>` : ''}
                         </td>
                     </tr>
                 `).join('')}
@@ -839,6 +1011,162 @@ async function guardarPassword() {
         errDiv.style.display = 'block';
         errDiv.textContent = 'Error al conectar con el servidor.';
     }
+}
+
+// ══════════════════════════════════════════
+// PAPELERA
+// ══════════════════════════════════════════
+
+let tabPapelera  = 'doctores';
+let datosPapelera = { doctores: [], servicios: [], horarios: [] };
+
+async function cargarPapelera() {
+    const cont = document.getElementById('contenido-papelera');
+    cont.innerHTML = `<div style="display:flex;align-items:center;gap:10px;color:#94a3b8;font-size:14px;padding:20px 0;">
+        <div style="width:16px;height:16px;border:2px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;"></div>
+        Cargando papelera...
+    </div>`;
+    try {
+        const res = await fetch(`${API}/papelera`, { headers: { Authorization: `Bearer ${token}` } });
+        datosPapelera = await res.json();
+        renderTabsPapelera();
+        renderPapeleraPorTab();
+    } catch (e) {
+        cont.innerHTML = '<p style="color:red;">Error al cargar la papelera.</p>';
+    }
+}
+
+function renderTabsPapelera() {
+    const tabs = [
+        { key: 'doctores',  label: 'Doctores',  count: datosPapelera.doctores.length,  icon: 'fa-user-doctor' },
+        { key: 'servicios', label: 'Servicios', count: datosPapelera.servicios.length, icon: 'fa-tooth' },
+        { key: 'horarios',  label: 'Horarios',  count: datosPapelera.horarios.length,  icon: 'fa-calendar-xmark' }
+    ];
+    document.getElementById('tabs-papelera').innerHTML = tabs.map(t => {
+        const a = tabPapelera === t.key;
+        return `<button onclick="cambiarTabPapelera('${t.key}')"
+            style="display:flex;align-items:center;gap:7px;padding:10px 18px;font-size:13px;font-weight:600;
+                   border:none;background:none;cursor:pointer;white-space:nowrap;
+                   border-bottom:${a ? '3px solid #2563eb' : '3px solid transparent'};
+                   color:${a ? '#2563eb' : '#6b7280'};margin-bottom:-2px;transition:color .15s;">
+            <i class="fa-solid ${t.icon}"></i>${t.label}
+            <span style="font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;
+                         background:${a ? '#eff6ff' : '#f3f4f6'};
+                         color:${a ? '#2563eb' : '#94a3b8'};">${t.count}</span>
+        </button>`;
+    }).join('');
+}
+
+function cambiarTabPapelera(tab) {
+    tabPapelera = tab;
+    renderTabsPapelera();
+    renderPapeleraPorTab();
+}
+
+function renderPapeleraPorTab() {
+    const cont = document.getElementById('contenido-papelera');
+    const lista = datosPapelera[tabPapelera] || [];
+
+    const vacios = {
+        doctores:  'No hay doctores en la papelera.',
+        servicios: 'No hay servicios en la papelera.',
+        horarios:  'No hay horarios en la papelera.'
+    };
+
+    if (!lista.length) {
+        cont.innerHTML = `
+            <div style="text-align:center;padding:48px 20px;color:#94a3b8;">
+                <i class="fa-solid fa-trash-can" style="font-size:36px;margin-bottom:12px;display:block;opacity:.4;"></i>
+                <p style="font-size:15px;margin:0;">${vacios[tabPapelera]}</p>
+            </div>`;
+        return;
+    }
+
+    const btnRestaurar = (tipo, id) =>
+        `<button onclick="restaurar('${tipo}', ${id})"
+            style="display:inline-flex;align-items:center;gap:5px;background:#fff;color:#16a34a;
+                   border:1.5px solid #bbf7d0;border-radius:7px;padding:5px 12px;
+                   font-size:12px;font-weight:600;cursor:pointer;transition:background .15s;"
+            onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#fff'">
+            <i class="fa-solid fa-trash-can-arrow-up" style="font-size:11px;"></i> Restaurar
+        </button>`;
+
+    if (tabPapelera === 'doctores') {
+        cont.innerHTML = `
+            <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:8px;">
+                <i class="fa-solid fa-circle-info"></i>
+                Al restaurar un doctor se restauran también sus horarios eliminados.
+            </div>
+            <table class="tabla">
+                <thead><tr>
+                    <th>Nombre</th><th>Especialidad</th><th>Email</th><th>Teléfono</th><th>Acciones</th>
+                </tr></thead>
+                <tbody>
+                    ${lista.map(d => `
+                        <tr>
+                            <td><strong>${esc(d.nombre)}</strong></td>
+                            <td>${esc(d.especialidad) || '—'}</td>
+                            <td>${esc(d.email) || '—'}</td>
+                            <td>${esc(d.telefono) || '—'}</td>
+                            <td>${btnRestaurar('doctores', d.id)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+    } else if (tabPapelera === 'servicios') {
+        cont.innerHTML = `
+            <table class="tabla">
+                <thead><tr>
+                    <th>Ícono</th><th>Nombre</th><th>Categoría</th><th>Duración</th><th>Precio</th><th>Acciones</th>
+                </tr></thead>
+                <tbody>
+                    ${lista.map(s => `
+                        <tr>
+                            <td style="font-size:20px;">${esc(s.icono) || '—'}</td>
+                            <td><strong>${esc(s.nombre)}</strong></td>
+                            <td>${esc(s.categoria) || '—'}</td>
+                            <td>${s.duracion_min} min</td>
+                            <td style="font-weight:700;">$${Number(s.precio).toLocaleString()} MXN</td>
+                            <td>${btnRestaurar('servicios', s.id)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+    } else {
+        cont.innerHTML = `
+            <table class="tabla">
+                <thead><tr>
+                    <th>Doctor</th><th>Día</th><th>Hora inicio</th><th>Hora fin</th><th>Acciones</th>
+                </tr></thead>
+                <tbody>
+                    ${lista.map(h => `
+                        <tr>
+                            <td>${esc(h.doctore?.nombre || h.doctor?.nombre) || '—'}</td>
+                            <td>${DIAS[h.dia_semana] || h.dia_semana}</td>
+                            <td>${esc(h.hora_inicio?.slice(0,5))}</td>
+                            <td>${esc(h.hora_fin?.slice(0,5))}</td>
+                            <td>${btnRestaurar('horarios', h.id)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+    }
+}
+
+async function restaurar(tipo, id) {
+    try {
+        const res = await fetch(`${API}/${tipo}/${id}/restaurar`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const d = await res.json();
+        if (!res.ok) { alert(d.error || 'Error al restaurar.'); return; }
+        await cargarPapelera();
+        // Refrescar la sección correspondiente si está abierta
+        if (tipo === 'doctores')  cargarDoctores();
+        if (tipo === 'servicios') cargarServicios();
+        if (tipo === 'horarios')  cargarHorarios();
+    } catch (e) { alert('Error al conectar con el servidor.'); }
 }
 
 // Carga inicial

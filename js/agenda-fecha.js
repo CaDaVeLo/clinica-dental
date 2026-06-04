@@ -24,12 +24,13 @@ function renderCalendario() {
     for (let d = 1; d <= dias_en_mes; d++) {
         const fecha = `${anioActual}-${String(mesActual + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const fechaObj = new Date(anioActual, mesActual, d);
-        const esPasado = fechaObj < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+        const hoyMidnight = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+        const esPasadoOHoy = fechaObj <= hoyMidnight; // requiere al menos 1 día de anticipación
         const esDomingo = fechaObj.getDay() === 0;
         const seleccionado = fecha === fechaSeleccionada ? 'seleccionado' : '';
 
-        if (esPasado) {
-            cal.innerHTML += `<span>${d}</span>`;
+        if (esPasadoOHoy) {
+            cal.innerHTML += `<span title="${fechaObj.getTime() === hoyMidnight.getTime() ? 'Las citas requieren 24 h de anticipación' : ''}">${d}</span>`;
         } else if (esDomingo) {
             cal.innerHTML += `<span class="domingo" title="Cerrado los domingos">${d}</span>`;
         } else {
