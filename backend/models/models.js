@@ -31,25 +31,28 @@ const Servicio = sequelize.define('servicios', {
     precio: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     categoria: { type: DataTypes.STRING(50) },
     icono: { type: DataTypes.STRING(10) },
-    activo: { type: DataTypes.BOOLEAN, defaultValue: true }
+    activo:    { type: DataTypes.BOOLEAN, defaultValue: true },
+    eliminado: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, { timestamps: false });
- 
+
 const Doctor = sequelize.define('doctores', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     nombre: { type: DataTypes.STRING(100), allowNull: false },
     especialidad: { type: DataTypes.STRING(100) },
     email: { type: DataTypes.STRING(150) },
     telefono: { type: DataTypes.STRING(20) },
-    activo: { type: DataTypes.BOOLEAN, defaultValue: true }
+    activo:    { type: DataTypes.BOOLEAN, defaultValue: true },
+    eliminado: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, { timestamps: false });
- 
+
 const Horario = sequelize.define('horarios', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     doctor_id: { type: DataTypes.INTEGER, allowNull: false },
     dia_semana: { type: DataTypes.INTEGER },
     hora_inicio: { type: DataTypes.TIME, allowNull: false },
     hora_fin: { type: DataTypes.TIME, allowNull: false },
-    activo: { type: DataTypes.BOOLEAN, defaultValue: true }
+    activo:    { type: DataTypes.BOOLEAN, defaultValue: true },
+    eliminado: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, { timestamps: false });
  
 const Cita = sequelize.define('citas', {
@@ -91,7 +94,8 @@ const Mensaje = sequelize.define('mensajes', {
     telefono: { type: DataTypes.STRING(20) },
     asunto: { type: DataTypes.STRING(100) },
     mensaje: { type: DataTypes.TEXT, allowNull: false },
-    leido: { type: DataTypes.BOOLEAN, defaultValue: false }
+    leido:      { type: DataTypes.BOOLEAN, defaultValue: false },
+    respondido: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, { timestamps: true, createdAt: 'creado_en', updatedAt: false });
 
 const Resena = sequelize.define('resenas', {

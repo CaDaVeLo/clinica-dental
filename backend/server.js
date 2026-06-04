@@ -183,7 +183,9 @@ app.post('/expedientes', verificarToken, async (req, res) => {
  
 app.get('/servicios', async (req, res) => {
     try {
-        const servicios = await Servicio.findAll({ where: { activo: true } });
+        const where = { eliminado: { [Op.not]: true } };
+        if (!req.query.todos) where.activo = true;
+        const servicios = await Servicio.findAll({ where });
         res.json(servicios);
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -203,7 +205,9 @@ app.post('/servicios', verificarToken, soloRol('recepcionista', 'admin'), async 
  
 app.get('/doctores', async (req, res) => {
     try {
-        const doctores = await Doctor.findAll({ where: { activo: true } });
+        const where = { eliminado: { [Op.not]: true } };
+        if (!req.query.todos) where.activo = true;
+        const doctores = await Doctor.findAll({ where });
         res.json(doctores);
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -326,7 +330,13 @@ app.post('/citas', async (req, res) => {
             return nuevaI < eF && nuevaF > eI;
         });
         if (conflicto) return res.status(409).json({ error: 'Ese horario ya está ocupado' });
- 
+
+        const hoy = new Date();
+        const fechaHoy = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+        if (!fecha || fecha <= fechaHoy) {
+            return res.status(400).json({ error: 'Las citas deben agendarse con al menos 24 horas de anticipación.' });
+        }
+
         const cita = await Cita.create({
             paciente_id: id_paciente, servicio_id, doctor_id,
             fecha, hora, estado: 'pendiente', metodo_pago, notas
@@ -806,7 +816,7 @@ app.post('/mensajes/:id/responder', verificarToken, soloRol('recepcionista'), as
             `
         });
 
-        await msg.update({ leido: true });
+        await msg.update({ leido: true, respondido: true });
         res.json({ ok: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -924,9 +934,19 @@ app.delete('/doctores/:id', verificarToken, soloRol('admin'), verificarPasswordA
         if (!doctor) return res.status(404).json({ error: 'Doctor no encontrado' });
         const citasCount = await Cita.count({ where: { doctor_id: req.params.id } });
         if (citasCount > 0) return res.status(400).json({ error: `No se puede eliminar: este doctor tiene ${citasCount} cita(s) registrada(s). Desactívalo en su lugar.` });
-        await Horario.destroy({ where: { doctor_id: req.params.id } });
-        await doctor.destroy();
-        res.json({ mensaje: 'Doctor eliminado' });
+        await Horario.update({ eliminado: true, activo: false }, { where: { doctor_id: req.params.id } });
+        await doctor.update({ eliminado: true, activo: false });
+        res.json({ mensaje: 'Doctor movido a la papelera. Puedes restaurarlo desde ahí.' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/doctores/:id/restaurar', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const doctor = await Doctor.findByPk(req.params.id);
+        if (!doctor) return res.status(404).json({ error: 'Doctor no encontrado' });
+        await doctor.update({ eliminado: false, activo: true });
+        await Horario.update({ eliminado: false, activo: true }, { where: { doctor_id: req.params.id, eliminado: true } });
+        res.json({ mensaje: 'Doctor restaurado correctamente.' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -950,6 +970,7 @@ app.put('/doctores/:id', verificarToken, soloRol('admin'), async (req, res) => {
 app.get('/horarios', verificarToken, soloRol('admin'), async (req, res) => {
     try {
         const horarios = await Horario.findAll({
+            where: { eliminado: { [Op.not]: true } },
             include: [{ model: Doctor }],
             order: [['doctor_id', 'ASC'], ['dia_semana', 'ASC']]
         });
@@ -968,8 +989,17 @@ app.delete('/horarios/:id', verificarToken, soloRol('admin'), verificarPasswordA
     try {
         const horario = await Horario.findByPk(req.params.id);
         if (!horario) return res.status(404).json({ error: 'Horario no encontrado' });
-        await horario.destroy();
-        res.json({ mensaje: 'Horario eliminado' });
+        await horario.update({ eliminado: true, activo: false });
+        res.json({ mensaje: 'Horario movido a la papelera. Puedes restaurarlo desde ahí.' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/horarios/:id/restaurar', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const horario = await Horario.findByPk(req.params.id);
+        if (!horario) return res.status(404).json({ error: 'Horario no encontrado' });
+        await horario.update({ eliminado: false, activo: true });
+        res.json({ mensaje: 'Horario restaurado correctamente.' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -980,8 +1010,17 @@ app.delete('/servicios/:id', verificarToken, soloRol('admin'), verificarPassword
         if (!servicio) return res.status(404).json({ error: 'Servicio no encontrado' });
         const citasCount = await Cita.count({ where: { servicio_id: req.params.id } });
         if (citasCount > 0) return res.status(400).json({ error: `No se puede eliminar: este servicio tiene ${citasCount} cita(s) registrada(s). Desactívalo en su lugar.` });
-        await servicio.destroy();
-        res.json({ mensaje: 'Servicio eliminado' });
+        await servicio.update({ eliminado: true, activo: false });
+        res.json({ mensaje: 'Servicio movido a la papelera. Puedes restaurarlo desde ahí.' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/servicios/:id/restaurar', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const servicio = await Servicio.findByPk(req.params.id);
+        if (!servicio) return res.status(404).json({ error: 'Servicio no encontrado' });
+        await servicio.update({ eliminado: false, activo: true });
+        res.json({ mensaje: 'Servicio restaurado correctamente.' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -992,6 +1031,35 @@ app.put('/servicios/:id', verificarToken, soloRol('admin'), async (req, res) => 
         await servicio.update(req.body);
         res.json(servicio);
     } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// Papelera: elementos eliminados con soft-delete (doctores, servicios, horarios)
+app.get('/papelera', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const [doctores, servicios, horarios] = await Promise.all([
+            Doctor.findAll({ where: { eliminado: true } }),
+            Servicio.findAll({ where: { eliminado: true } }),
+            Horario.findAll({
+                where: { eliminado: true },
+                include: [{ model: Doctor, attributes: ['nombre'] }],
+                order: [['doctor_id', 'ASC'], ['dia_semana', 'ASC']]
+            })
+        ]);
+        res.json({ doctores, servicios, horarios });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Verifica la contraseña del admin sin ejecutar ninguna acción (para confirmar en frontend)
+app.post('/admin/verificar-password', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const { passwordAdmin } = req.body;
+        if (!passwordAdmin) return res.status(400).json({ error: 'Contraseña requerida.' });
+        const admin = await Usuario.findByPk(req.usuario.id);
+        if (!admin) return res.status(401).json({ error: 'Administrador no encontrado.' });
+        const valido = await bcrypt.compare(passwordAdmin, admin.password);
+        if (!valido) return res.status(401).json({ error: 'Contraseña incorrecta.' });
+        res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ---------- INICIAR ----------

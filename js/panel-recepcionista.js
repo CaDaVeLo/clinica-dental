@@ -666,12 +666,18 @@ function imprimirRecibo(pagoId) {
   .total-final{font-size:26px;font-weight:800;color:${accentColor};}
   .divider{border:none;border-top:1px solid #e2e8f0;margin:6px 0;}
   .footer{margin-top:28px;padding-top:14px;border-top:1px solid #e2e8f0;text-align:center;font-size:11px;color:#94a3b8;line-height:1.8;}
-  .print-btn{display:block;margin:24px auto 0;background:${accentColor};color:#fff;border:none;border-radius:8px;
-             padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer;}
-  @media print{.print-btn{display:none!important;} body{padding:16px 20px;}}
+  .btn-area{display:flex;gap:12px;justify-content:center;margin-top:28px;}
+  .btn-imprimir,.btn-pdf{display:inline-flex;align-items:center;gap:8px;padding:11px 26px;
+    border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;}
+  .btn-imprimir{background:${accentColor};}
+  .btn-pdf{background:#0f172a;}
+  .btn-imprimir:hover{opacity:.9;} .btn-pdf:hover{opacity:.85;}
+  @media print{.btn-area{display:none!important;} body{padding:16px 20px;}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
 </head>
 <body>
+<div id="recibo">
 
 <div class="header">
   <div>
@@ -682,7 +688,11 @@ function imprimirRecibo(pagoId) {
     <h2>${tipo}</h2>
     <p>No. ${String(p.id).padStart(6,'0')}</p>
     <p>Fecha de emisión: ${fechaEmision}</p>
-    <div class="stamp">${stampText}</div>
+    <div class="stamp">
+      ${esPagado
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg> PAGADO`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> PENDIENTE`}
+    </div>
   </div>
 </div>
 
@@ -715,7 +725,9 @@ function imprimirRecibo(pagoId) {
     <span style="font-size:15px;font-weight:700;color:#0f172a;">Total</span>
     <span class="total-final">${fmt(montoFinal)}</span>
   </div>
-  ${esPagado ? `<p style="font-size:11px;color:#16a34a;margin-top:10px;font-weight:600;">✓ Pago confirmado el ${esc(p.creado_en?.slice(0,10)) || fechaEmision}</p>` : ''}
+  ${esPagado ? `<p style="font-size:11px;color:#16a34a;margin-top:10px;font-weight:600;display:flex;align-items:center;gap:5px;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Pago confirmado el ${esc(p.creado_en?.slice(0,10)) || fechaEmision}</p>` : ''}
 </div>
 
 <div class="footer">
@@ -723,11 +735,33 @@ function imprimirRecibo(pagoId) {
   <p>Clínica Dental &nbsp;·&nbsp; citas@dentalelite.com &nbsp;·&nbsp; +52 (55) 1234-5678</p>
 </div>
 
-<button class="print-btn" onclick="window.print()">
-  <span style="margin-right:6px;">🖨️</span> Imprimir / Guardar como PDF
-</button>
+</div><!-- #recibo -->
 
-<script>window.addEventListener('load', () => window.print());<\/script>
+<div class="btn-area" id="btn-area">
+  <button class="btn-imprimir" onclick="window.print()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Imprimir
+  </button>
+  <button class="btn-pdf" onclick="descargarPdf()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Descargar PDF
+  </button>
+</div>
+
+<script>
+function descargarPdf() {
+  const area = document.getElementById('btn-area');
+  area.style.display = 'none';
+  html2pdf().set({
+    margin: [10, 10, 10, 10],
+    filename: 'recibo-clinica-${String(p.id).padStart(6,'0')}.pdf',
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).from(document.getElementById('recibo')).save().then(() => {
+    area.style.display = 'flex';
+  });
+}
+<\/script>
 </body>
 </html>`;
 
@@ -899,43 +933,111 @@ async function cargarEstadisticas() {
     }
 }
 
+let todosMensajes = [];
+let tabMensajes   = 'pendientes';
+
+function renderTabsMensajes() {
+    const nPendientes  = todosMensajes.filter(m => !m.leido && !m.respondido).length;
+    const nLeidos      = todosMensajes.filter(m => m.leido && !m.respondido).length;
+    const nContestados = todosMensajes.filter(m => m.respondido).length;
+    const tabs = [
+        { key: 'pendientes',  label: 'Pendientes',  count: nPendientes,  icon: 'fa-envelope' },
+        { key: 'leidos',      label: 'Leídos',      count: nLeidos,      icon: 'fa-envelope-open' },
+        { key: 'contestados', label: 'Contestados', count: nContestados, icon: 'fa-reply' }
+    ];
+    document.getElementById('tabs-mensajes').innerHTML = tabs.map(t => {
+        const activo = tabMensajes === t.key;
+        return `<button onclick="cambiarTabMensajes('${t.key}')"
+            style="display:flex;align-items:center;gap:7px;padding:10px 18px;font-size:13px;font-weight:600;
+                   border:none;background:none;cursor:pointer;white-space:nowrap;
+                   border-bottom:${activo ? '3px solid #2563eb' : '3px solid transparent'};
+                   color:${activo ? '#2563eb' : '#6b7280'};margin-bottom:-2px;transition:color .15s;">
+            <i class="fa-solid ${t.icon}"></i>${t.label}
+            <span style="font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;
+                         background:${activo ? '#eff6ff' : '#f3f4f6'};
+                         color:${activo ? '#2563eb' : '#94a3b8'};">${t.count}</span>
+        </button>`;
+    }).join('');
+}
+
+function cambiarTabMensajes(tab) {
+    tabMensajes = tab;
+    renderTabsMensajes();
+    renderMensajesPorTab();
+}
+
+function renderMensajesPorTab() {
+    let lista;
+    if (tabMensajes === 'contestados') lista = todosMensajes.filter(m => m.respondido);
+    else if (tabMensajes === 'leidos')  lista = todosMensajes.filter(m => m.leido && !m.respondido);
+    else                                lista = todosMensajes.filter(m => !m.leido && !m.respondido);
+    renderTablaMensajes(lista);
+}
+
+function renderTablaMensajes(mensajes) {
+    const contenedor = document.getElementById('tabla-mensajes');
+    const vacios = {
+        pendientes:  'No hay mensajes pendientes.',
+        leidos:      'No hay mensajes leídos sin contestar.',
+        contestados: 'No hay mensajes contestados aún.'
+    };
+    if (!mensajes.length) {
+        contenedor.innerHTML = `
+            <div style="text-align:center;padding:40px 20px;color:#94a3b8;">
+                <i class="fa-solid fa-envelope-open" style="font-size:32px;margin-bottom:12px;display:block;"></i>
+                <p style="font-size:14px;margin:0;">${vacios[tabMensajes]}</p>
+            </div>`;
+        return;
+    }
+
+    const btnEstilo = (c, bc) =>
+        `display:inline-flex;align-items:center;gap:5px;background:#fff;color:${c};
+         border:1.5px solid ${bc};border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;`;
+
+    contenedor.innerHTML = `
+        <table class="tabla">
+            <thead><tr>
+                <th>Nombre</th><th>Email</th><th>Asunto</th>
+                <th>Mensaje</th><th>Fecha</th><th>Acciones</th>
+            </tr></thead>
+            <tbody>
+                ${mensajes.map(m => `
+                    <tr style="${!m.leido ? 'background:#eff6ff;' : ''}">
+                        <td><strong>${esc(m.nombre)}</strong></td>
+                        <td style="color:#475569;">${esc(m.email)}</td>
+                        <td>${esc(m.asunto) || '—'}</td>
+                        <td style="max-width:220px;white-space:pre-wrap;word-break:break-word;color:#374151;">${esc(m.mensaje)}</td>
+                        <td style="color:#64748b;font-size:13px;">${esc(m.creado_en?.slice(0,10))}</td>
+                        <td style="display:flex;flex-direction:column;gap:6px;min-width:110px;">
+                            <button onclick="abrirRespuesta(${m.id},'${esc(m.nombre).replace(/'/g,"&#39;")}','${esc(m.email)}')"
+                                style="${btnEstilo('#2563eb','#bfdbfe')}"
+                                onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+                                <i class="fa-solid fa-reply" style="font-size:11px;"></i> Responder
+                            </button>
+                            ${!m.leido && !m.respondido ? `
+                            <button onclick="marcarLeido(${m.id})"
+                                style="${btnEstilo('#475569','#cbd5e1')}"
+                                onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">
+                                <i class="fa-solid fa-check" style="font-size:11px;"></i> Marcar leído
+                            </button>` : ''}
+                            ${m.respondido ? `<span style="font-size:11px;color:#16a34a;font-weight:600;display:flex;align-items:center;gap:4px;">
+                                <i class="fa-solid fa-circle-check" style="font-size:11px;"></i> Contestado
+                            </span>` : ''}
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
 async function cargarMensajes() {
     const contenedor = document.getElementById('tabla-mensajes');
     try {
         const res = await fetch(`${API}/mensajes`, { headers: { Authorization: `Bearer ${token}` } });
-        const mensajes = await res.json();
-
-        if (!mensajes.length) {
-            contenedor.innerHTML = '<p style="color:#888;">No hay mensajes de contacto.</p>';
-            return;
-        }
-
-        contenedor.innerHTML = `
-            <table class="tabla">
-                <thead>
-                    <tr>
-                        <th>Nombre</th><th>Email</th><th>Teléfono</th>
-                        <th>Asunto</th><th>Mensaje</th><th>Fecha</th><th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${mensajes.map(m => `
-                        <tr style="${m.leido ? '' : 'font-weight:600; background:#eff6ff;'}">
-                            <td>${esc(m.nombre)}</td>
-                            <td>${esc(m.email)}</td>
-                            <td>${esc(m.telefono)}</td>
-                            <td>${esc(m.asunto)}</td>
-                            <td style="max-width:220px; white-space:pre-wrap; word-break:break-word;">${esc(m.mensaje)}</td>
-                            <td>${esc(m.creado_en?.slice(0, 10))}</td>
-                            <td style="display:flex; flex-direction:column; gap:6px;">
-                                <button class="btn-tabla" onclick="abrirRespuesta(${m.id}, '${esc(m.nombre).replace(/'/g, '&#39;')}', '${esc(m.email)}')">Responder</button>
-                                ${!m.leido ? `<button class="btn-tabla" onclick="marcarLeido(${m.id})">Marcar leído</button>` : '<span style="color:#6b7280; font-size:12px;">Leído</span>'}
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
+        todosMensajes = await res.json();
+        renderTabsMensajes();
+        renderMensajesPorTab();
     } catch (e) {
         contenedor.innerHTML = '<p style="color:red;">Error al cargar mensajes.</p>';
     }
@@ -947,10 +1049,9 @@ async function marcarLeido(id) {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` }
         });
-        cargarMensajes();
-    } catch (e) {
-        alert('Error al marcar el mensaje.');
-    }
+        await cargarMensajes();
+        cambiarTabMensajes('leidos');
+    } catch (e) { alert('Error al marcar el mensaje.'); }
 }
 
 let mensajeRespuestaId = null;
@@ -993,7 +1094,8 @@ async function enviarRespuesta() {
         }
 
         cerrarModal('modal-respuesta');
-        cargarMensajes();
+        await cargarMensajes();
+        cambiarTabMensajes('contestados');
     } catch (e) {
         errDiv.style.display = 'block';
         errDiv.textContent = 'No se pudo conectar con el servidor.';
