@@ -190,7 +190,7 @@ app.get('/servicios', async (req, res) => {
     }
 });
  
-app.post('/servicios', verificarToken, soloRol('recepcionista'), async (req, res) => {
+app.post('/servicios', verificarToken, soloRol('recepcionista', 'admin'), async (req, res) => {
     try {
         const servicio = await Servicio.create(req.body);
         res.status(201).json(servicio);
@@ -745,8 +745,114 @@ app.post('/resenas', async (req, res) => {
     }
 });
 
+// ---------- ADMIN ----------
+
+// Usuarios: listar, editar, eliminar, cambiar contraseña
+app.get('/usuarios', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const usuarios = await Usuario.findAll({ attributes: ['id', 'nombre', 'email', 'rol', 'doctor_id'] });
+        res.json(usuarios);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/usuarios/:id', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const usuario = await Usuario.findByPk(req.params.id);
+        if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+        const { nombre, email, rol, doctor_id } = req.body;
+        await usuario.update({ nombre, email, rol, doctor_id: doctor_id || null });
+        res.json({ id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol });
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete('/usuarios/:id', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const usuario = await Usuario.findByPk(req.params.id);
+        if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+        if (usuario.rol === 'admin') return res.status(400).json({ error: 'No se puede eliminar una cuenta de administrador.' });
+        await usuario.destroy();
+        res.json({ mensaje: 'Usuario eliminado' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/usuarios/:id/password', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const { password } = req.body;
+        if (!password || password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' });
+        const usuario = await Usuario.findByPk(req.params.id);
+        if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+        const hash = await bcrypt.hash(password, 10);
+        await usuario.update({ password: hash });
+        res.json({ ok: true });
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.post('/usuarios/admin', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const { nombre, email, password, rol, doctor_id } = req.body;
+        if (!nombre || !email || !password || !rol) return res.status(400).json({ error: 'Faltan campos obligatorios.' });
+        const hash = await bcrypt.hash(password, 10);
+        const usuario = await Usuario.create({ nombre, email, password: hash, rol, doctor_id: doctor_id || null });
+        res.status(201).json({ id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol });
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// Doctores: crear, editar, activar/desactivar
+app.post('/doctores', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const doctor = await Doctor.create(req.body);
+        res.status(201).json(doctor);
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.put('/doctores/:id', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const doctor = await Doctor.findByPk(req.params.id);
+        if (!doctor) return res.status(404).json({ error: 'Doctor no encontrado' });
+        await doctor.update(req.body);
+        res.json(doctor);
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// Horarios: listar todos, crear, eliminar
+app.get('/horarios', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const horarios = await Horario.findAll({
+            include: [{ model: Doctor }],
+            order: [['doctor_id', 'ASC'], ['dia_semana', 'ASC']]
+        });
+        res.json(horarios);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/horarios', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const horario = await Horario.create(req.body);
+        res.status(201).json(horario);
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete('/horarios/:id', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const horario = await Horario.findByPk(req.params.id);
+        if (!horario) return res.status(404).json({ error: 'Horario no encontrado' });
+        await horario.destroy();
+        res.json({ mensaje: 'Horario eliminado' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Servicios: crear (admin), editar precio/datos, activar/desactivar
+app.put('/servicios/:id', verificarToken, soloRol('admin'), async (req, res) => {
+    try {
+        const servicio = await Servicio.findByPk(req.params.id);
+        if (!servicio) return res.status(404).json({ error: 'Servicio no encontrado' });
+        await servicio.update(req.body);
+        res.json(servicio);
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
 // ---------- INICIAR ----------
- 
+
 const PORT = process.env.PORT || 3000;
  
 sequelize.sync({ alter: true }).then(() => {
