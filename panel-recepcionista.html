@@ -6,6 +6,52 @@
     <title>Panel Recepcionista - Clínica Dental</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/panel.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .seccion-header {
+            display:flex; justify-content:space-between; align-items:center;
+            margin-bottom:20px; flex-wrap:wrap; gap:10px;
+        }
+        .seccion-header h2 { font-size:18px; font-weight:700; color:#0f172a; margin:0; }
+
+        .stat-card {
+            background:#fff; border-radius:14px; padding:20px 22px;
+            box-shadow:0 1px 6px rgba(0,0,0,.07); position:relative;
+            transition:box-shadow .2s, transform .15s;
+        }
+        .stat-card:hover { box-shadow:0 4px 18px rgba(0,0,0,.11); transform:translateY(-2px); }
+        .stat-card-icon { font-size:20px; margin-bottom:8px; }
+        .stat-card-label { font-size:12px; color:#6b7280; margin:0 0 4px; }
+        .stat-card-value { font-size:28px; font-weight:800; margin:0 0 2px; color:#0f172a; }
+        .stat-card-sub { font-size:11px; color:#94a3b8; margin:0; }
+
+        .stats-section-label {
+            font-size:11px; font-weight:700; text-transform:uppercase;
+            letter-spacing:.06em; color:#94a3b8; margin:0 0 10px;
+        }
+
+        .recordatorio-card {
+            background:#fff; border-radius:14px; padding:22px 24px;
+            box-shadow:0 1px 6px rgba(0,0,0,.07); margin-top:24px;
+            display:flex; align-items:flex-start; justify-content:space-between;
+            gap:20px; flex-wrap:wrap;
+        }
+
+        .buscar-wrap {
+            display:flex; align-items:center; gap:10px;
+            background:#fff; border:1.5px solid #e5e7eb; border-radius:10px;
+            padding:0 14px; width:340px; transition:border-color .2s;
+        }
+        .buscar-wrap:focus-within { border-color:#2563eb; }
+        .buscar-wrap i { color:#9ca3af; font-size:14px; }
+        .buscar-wrap input { border:none; outline:none; font-size:14px; padding:10px 0; width:100%; background:transparent; }
+
+        .badge-curp {
+            font-size:10px; font-weight:700; letter-spacing:.04em;
+            background:#eff6ff; color:#2563eb; padding:2px 7px;
+            border-radius:4px; vertical-align:middle; margin-left:4px;
+        }
+    </style>
 </head>
 <body>
  
@@ -35,7 +81,11 @@
  
             <!-- CITAS -->
             <div id="seccion-citas">
-                <div style="display:flex; gap:12px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
+                <!-- Tabs -->
+                <div id="tabs-citas" style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:20px;gap:0;"></div>
+
+                <!-- Filtros (solo visibles en tab Próximas) -->
+                <div id="filtros-citas" style="display:flex; gap:12px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
                     <input type="date" id="filtro-fecha" class="input-fecha" style="height:40px; box-sizing:border-box;">
                     <button class="btn-siguiente" style="height:40px; padding:0 20px; font-size:14px; box-sizing:border-box; margin-top:0;" onclick="aplicarFiltro()">Filtrar por fecha</button>
                     <button class="btn-outline-azul" style="height:40px; padding:0 20px; font-size:14px; box-sizing:border-box;" onclick="limpiarFiltro()">Ver todas</button>
@@ -57,15 +107,29 @@
  
             <!-- PACIENTES -->
             <div id="seccion-pacientes" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <input type="text" id="buscar-paciente" placeholder="Buscar por nombre, email o CURP..." style="border:1px solid #ddd; border-radius:8px; padding:10px 14px; width:320px; font-size:14px;" oninput="filtrarPacientes()">
-                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="abrirModalPaciente()">+ Nuevo paciente</button>
+                <div class="seccion-header">
+                    <div class="buscar-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="buscar-paciente" placeholder="Buscar por nombre, email o CURP..." oninput="filtrarPacientes()">
+                    </div>
+                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="abrirModalPaciente()">
+                        <i class="fa-solid fa-user-plus" style="margin-right:6px;"></i>Nuevo paciente
+                    </button>
                 </div>
                 <div id="tabla-pacientes" class="tabla-wrap"></div>
             </div>
  
             <!-- PAGOS -->
             <div id="seccion-pagos" style="display:none;">
+                <div class="seccion-header" style="margin-bottom:16px;">
+                    <div class="buscar-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="buscar-pago"
+                            placeholder="Buscar por paciente o servicio..."
+                            oninput="filtrarPagos()">
+                    </div>
+                </div>
+                <div id="tabs-pagos" style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:20px;gap:0;"></div>
                 <div id="tabla-pagos" class="tabla-wrap"></div>
             </div>
 
@@ -92,24 +156,39 @@
     <div id="modal-paciente" class="modal" style="display:none;">
         <div class="modal-contenido">
             <div class="modal-header">
-                <h3>Nuevo Paciente</h3>
+                <h3><i class="fa-solid fa-user-plus" style="margin-right:8px;color:#2563eb;"></i>Nuevo Paciente</h3>
                 <button onclick="cerrarModal('modal-paciente')" class="modal-cerrar">✕</button>
             </div>
             <div class="fila-form">
-                <div class="campo"><label>Nombre *</label><input type="text" id="p-nombre"></div>
-                <div class="campo"><label>CURP *</label><input type="text" id="p-curp"></div>
+                <div class="campo"><label>Nombre *</label><input type="text" id="p-nombre" placeholder="Nombre completo"></div>
+                <div class="campo">
+                    <label>CURP *</label>
+                    <input type="text" id="p-curp" placeholder="LOAM990415HSLPRS05"
+                        maxlength="18" style="text-transform:uppercase;"
+                        oninput="autoFechaDeCurp()">
+                </div>
             </div>
             <div class="fila-form">
-                <div class="campo"><label>Email *</label><input type="email" id="p-email"></div>
-                <div class="campo"><label>Teléfono</label><input type="tel" id="p-telefono"></div>
+                <div class="campo"><label>Email *</label><input type="email" id="p-email" placeholder="correo@ejemplo.com"></div>
+                <div class="campo"><label>Teléfono</label><input type="tel" id="p-telefono" placeholder="6651234567"></div>
             </div>
             <div class="fila-form">
-                <div class="campo"><label>Fecha de nacimiento</label><input type="date" id="p-fecha-nac"></div>
-                <div class="campo"><label>Dirección</label><input type="text" id="p-direccion"></div>
+                <div class="campo">
+                    <label>
+                        Fecha de nacimiento
+                        <span id="lbl-curp-auto" style="display:none;font-size:10px;font-weight:700;background:#eff6ff;color:#2563eb;padding:2px 7px;border-radius:4px;margin-left:6px;vertical-align:middle;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> CURP
+                        </span>
+                    </label>
+                    <input type="date" id="p-fecha-nac">
+                </div>
+                <div class="campo"><label>Dirección</label><input type="text" id="p-direccion" placeholder="Calle, número, colonia..."></div>
             </div>
-            <div id="error-paciente" style="color:red; font-size:13px; display:none; margin-top:8px;"></div>
-            <div style="margin-top:20px;">
-                <button class="btn-siguiente" onclick="guardarPaciente()">Guardar</button>
+            <div id="error-paciente" style="color:#dc2626;font-size:13px;display:none;margin-top:8px;background:#fef2f2;padding:8px 12px;border-radius:8px;"></div>
+            <div style="margin-top:20px;display:flex;gap:10px;">
+                <button class="btn-siguiente" onclick="guardarPaciente()">
+                    <i class="fa-solid fa-floppy-disk" style="margin-right:6px;"></i>Guardar
+                </button>
                 <button class="btn-atras" onclick="cerrarModal('modal-paciente')">Cancelar</button>
             </div>
         </div>
@@ -151,6 +230,48 @@
         </div>
     </div>
 
+    <!-- MODAL ELIMINAR CITA -->
+    <div id="modal-eliminar-cita" class="modal" style="display:none;">
+        <div class="modal-contenido" style="max-width:380px;text-align:center;padding:36px 32px;">
+
+            <!-- Icono -->
+            <div style="width:64px;height:64px;border-radius:50%;background:#fef2f2;border:2px solid #fecaca;
+                        display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                <i class="fa-solid fa-trash-can" style="font-size:24px;color:#dc2626;"></i>
+            </div>
+
+            <h3 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 8px;">Eliminar cita</h3>
+            <p style="font-size:14px;color:#6b7280;margin:0 0 20px;line-height:1.6;">
+                Esta acción es <strong style="color:#0f172a;">permanente</strong> y no se puede deshacer.<br>
+                La cita será eliminada del sistema.
+            </p>
+
+            <!-- Aviso -->
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;
+                        padding:12px 16px;margin-bottom:24px;text-align:left;">
+                <p style="margin:0;font-size:13px;color:#991b1b;display:flex;align-items:center;gap:8px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Solo se pueden eliminar citas que ya fueron canceladas.
+                </p>
+            </div>
+
+            <!-- Botones -->
+            <div style="display:flex;gap:10px;justify-content:center;">
+                <button onclick="cerrarModal('modal-eliminar-cita')"
+                    style="flex:1;padding:11px 0;border:1.5px solid #e5e7eb;background:#fff;
+                           color:#374151;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;">
+                    Cancelar
+                </button>
+                <button id="btn-confirmar-eliminar-cita" onclick="confirmarEliminarCita()"
+                    style="flex:1;padding:11px 0;border:none;background:#dc2626;
+                           color:#fff;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;
+                           display:flex;align-items:center;justify-content:center;gap:7px;">
+                    <i class="fa-solid fa-trash-can"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DESCUENTO PAGO -->
     <div id="modal-descuento" class="modal" style="display:none;">
         <div class="modal-contenido" style="max-width:380px;">
@@ -167,8 +288,29 @@
                 <input type="text" id="desc-concepto" placeholder="Ej. Primera visita, convenio..." style="border:1px solid #ddd; border-radius:8px; padding:10px; width:100%; font-size:14px; box-sizing:border-box;">
             </div>
             <div style="margin-top:20px;">
-                <button class="btn-siguiente" onclick="confirmarDescuento()">Aplicar</button>
+                <button class="btn-siguiente" onclick="preConfirmarDescuento()">Aplicar</button>
                 <button class="btn-atras" onclick="cerrarModal('modal-descuento')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMACIÓN ACCIÓN PAGO (compartido para descuento y marcar pagado) -->
+    <div id="modal-confirmar-accion-pago" class="modal" style="display:none;">
+        <div class="modal-contenido" style="max-width:400px;text-align:center;padding:36px 32px;">
+            <div id="cap-icono" style="margin:0 auto 20px;"></div>
+            <h3 id="cap-titulo" style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 8px;"></h3>
+            <p id="cap-desc" style="font-size:14px;color:#6b7280;margin:0 0 24px;line-height:1.7;"></p>
+            <div style="display:flex;gap:10px;justify-content:center;">
+                <button onclick="cerrarModal('modal-confirmar-accion-pago')"
+                    style="flex:1;padding:11px 0;border:1.5px solid #e5e7eb;background:#fff;
+                           color:#374151;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;">
+                    Cancelar
+                </button>
+                <button id="cap-btn" onclick="ejecutarAccionPago()"
+                    style="flex:1;padding:11px 0;border:none;border-radius:9px;font-size:14px;
+                           font-weight:700;cursor:pointer;color:#fff;
+                           display:flex;align-items:center;justify-content:center;gap:7px;">
+                </button>
             </div>
         </div>
     </div>

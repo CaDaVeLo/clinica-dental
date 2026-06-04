@@ -459,13 +459,23 @@ app.delete('/citas/:id', async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
- 
+
+app.delete('/citas/:id/eliminar', verificarToken, soloRol('recepcionista'), async (req, res) => {
+    try {
+        const cita = await Cita.findByPk(req.params.id);
+        if (!cita) return res.status(404).json({ error: 'Cita no encontrada' });
+        if (cita.estado !== 'cancelada') return res.status(400).json({ error: 'Solo se pueden eliminar citas canceladas.' });
+        await cita.destroy();
+        res.json({ mensaje: 'Cita eliminada permanentemente' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ---------- PAGOS ----------
  
 app.get('/pagos', verificarToken, soloRol('recepcionista'), async (req, res) => {
     try {
         const pagos = await Pago.findAll({
-            include: [{ model: Cita, include: [{ model: Paciente }, { model: Servicio }] }],
+            include: [{ model: Cita, include: [{ model: Paciente }, { model: Servicio }, { model: Doctor }] }],
             order: [['creado_en', 'DESC']]
         });
         res.json(pagos);
@@ -585,25 +595,121 @@ app.put('/presupuestos/:id', verificarToken, async (req, res) => {
 
 async function enviarRecordatorios() {
     try {
-        const manana = new Date(); manana.setDate(manana.getDate() + 1);
-        const fechaManana = manana.toISOString().slice(0, 10);
+        const manana = new Date();
+        manana.setDate(manana.getDate() + 1);
+        // Componentes locales para evitar desfase UTC
+        const fechaManana = `${manana.getFullYear()}-${String(manana.getMonth() + 1).padStart(2,'0')}-${String(manana.getDate()).padStart(2,'0')}`;
+        const fechaFormato = new Date(fechaManana + 'T12:00:00').toLocaleDateString('es-MX', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
         const citas = await Cita.findAll({
-            where: { fecha: fechaManana, estado: ['pendiente', 'confirmada'] },
+            where: { fecha: fechaManana, estado: { [Op.in]: ['pendiente', 'confirmada'] } },
             include: [{ model: Paciente }, { model: Servicio }, { model: Doctor }]
         });
-        citas.forEach(c => {
-            console.log(`[RECORDATORIO] ${c.paciente?.nombre} (${c.paciente?.email}) — ${c.servicio?.nombre} mañana ${fechaManana} a las ${c.hora?.slice(0,5)} con ${c.doctore?.nombre}`);
-        });
-        return citas.length;
+
+        let enviados = 0;
+        await Promise.all(citas.map(async c => {
+            const email = c.paciente?.email;
+            if (!email) return;
+            const nombrePaciente = c.paciente?.nombre || 'Paciente';
+            const nombreServicio = c.servicio?.nombre || '—';
+            const nombreDoctor   = c.doctore?.nombre  || 'por asignar';
+            const horaFormato    = c.hora?.slice(0, 5) || '—';
+            try {
+                await transporter.sendMail({
+                    from: process.env.EMAIL_FROM,
+                    to: email,
+                    subject: `Recordatorio de cita — Clínica Dental`,
+                    html: `
+                        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                            <div style="background:#2563eb;padding:24px 32px;border-radius:12px 12px 0 0;">
+                                <table style="width:100%;border-collapse:collapse;">
+                                    <tr>
+                                        <td style="vertical-align:middle;padding:0;">
+                                            <table style="border-collapse:collapse;">
+                                                <tr>
+                                                    <td style="padding-right:14px;vertical-align:middle;">
+                                                        <div style="width:44px;height:44px;background:rgba(255,255,255,0.15);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:44px;">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto;">
+                                                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                                                            </svg>
+                                                        </div>
+                                                    </td>
+                                                    <td style="vertical-align:middle;">
+                                                        <h2 style="color:white;margin:0;font-size:20px;font-weight:700;">Clínica Dental</h2>
+                                                        <p style="color:#bfdbfe;margin:3px 0 0;font-size:13px;">Recordatorio de cita</p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div style="background:#eff6ff;padding:16px 32px;border:1px solid #bfdbfe;border-top:none;">
+                                <p style="color:#1d4ed8;font-size:13px;font-weight:700;margin:0;text-align:center;letter-spacing:.04em;text-transform:uppercase;">
+                                    Tienes una cita programada para mañana
+                                </p>
+                            </div>
+                            <div style="background:#f9fafb;padding:28px 32px;border:1px solid #e5e7eb;border-top:none;">
+                                <p style="color:#374151;font-size:15px;margin:0 0 20px;">
+                                    Hola <strong>${nombrePaciente}</strong>, te recordamos que tienes una cita dental programada para mañana. ¡Te esperamos!
+                                </p>
+                                <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                                    <tr style="border-bottom:1px solid #e5e7eb;">
+                                        <td style="padding:10px 0;color:#6b7280;width:40%;">Servicio</td>
+                                        <td style="padding:10px 0;color:#111;font-weight:600;">${nombreServicio}</td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #e5e7eb;">
+                                        <td style="padding:10px 0;color:#6b7280;">Fecha</td>
+                                        <td style="padding:10px 0;color:#2563eb;font-weight:700;">${fechaFormato}</td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #e5e7eb;">
+                                        <td style="padding:10px 0;color:#6b7280;">Hora</td>
+                                        <td style="padding:10px 0;color:#2563eb;font-weight:700;font-size:16px;">${horaFormato}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:10px 0;color:#6b7280;">Doctor</td>
+                                        <td style="padding:10px 0;color:#111;font-weight:600;">${nombreDoctor}</td>
+                                    </tr>
+                                </table>
+                                <div style="margin-top:22px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;padding:12px 16px;">
+                                    <p style="margin:0;font-size:13px;color:#1d4ed8;font-weight:600;">Recuerda:</p>
+                                    <ul style="margin:6px 0 0;padding-left:18px;font-size:13px;color:#1e40af;line-height:1.9;">
+                                        <li>Llega al menos 10 minutos antes de tu cita.</li>
+                                        <li>Si necesitas cancelar, hazlo con al menos 24 horas de anticipación.</li>
+                                        <li>Trae una identificación oficial.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div style="background:#f3f4f6;padding:16px 32px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb;border-top:none;">
+                                <p style="color:#9ca3af;font-size:12px;margin:0;text-align:center;">
+                                    Clínica Dental &nbsp;·&nbsp; citas@dentalelite.com &nbsp;·&nbsp; +52 (55) 1234-5678
+                                </p>
+                            </div>
+                        </div>
+                    `
+                });
+                enviados++;
+            } catch (err) {
+                console.error('[RECORDATORIO EMAIL]', email, err.message);
+            }
+        }));
+
+        return { enviados, total: citas.length, fecha: fechaManana };
     } catch (e) {
         console.error('[RECORDATORIO ERROR]', e.message);
-        return 0;
+        return { enviados: 0, total: 0, fecha: '?' };
     }
 }
 
 app.post('/recordatorios/enviar', verificarToken, soloRol('recepcionista'), async (req, res) => {
-    const enviados = await enviarRecordatorios();
-    res.json({ mensaje: `Recordatorios procesados: ${enviados}` });
+    const { enviados, total, fecha } = await enviarRecordatorios();
+    const mensaje = total === 0
+        ? `No se encontraron citas pendientes/confirmadas para el ${fecha}.`
+        : `Se enviaron ${enviados} de ${total} recordatorio(s) para el ${fecha}.`;
+    res.json({ mensaje, enviados, total, fecha });
 });
 
 // Cron: ejecutar recordatorios cada 24 horas
@@ -747,6 +853,20 @@ app.post('/resenas', async (req, res) => {
 
 // ---------- ADMIN ----------
 
+async function verificarPasswordAdmin(req, res, next) {
+    try {
+        const { passwordAdmin } = req.body;
+        if (!passwordAdmin) return res.status(400).json({ error: 'Se requiere la contraseña de administrador.' });
+        const admin = await Usuario.findByPk(req.usuario.id);
+        if (!admin) return res.status(401).json({ error: 'Administrador no encontrado.' });
+        const valido = await bcrypt.compare(passwordAdmin, admin.password);
+        if (!valido) return res.status(401).json({ error: 'Contraseña incorrecta.' });
+        next();
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+}
+
 // Usuarios: listar, editar, eliminar, cambiar contraseña
 app.get('/usuarios', verificarToken, soloRol('admin'), async (req, res) => {
     try {
@@ -765,7 +885,7 @@ app.put('/usuarios/:id', verificarToken, soloRol('admin'), async (req, res) => {
     } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-app.delete('/usuarios/:id', verificarToken, soloRol('admin'), async (req, res) => {
+app.delete('/usuarios/:id', verificarToken, soloRol('admin'), verificarPasswordAdmin, async (req, res) => {
     try {
         const usuario = await Usuario.findByPk(req.params.id);
         if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -797,7 +917,19 @@ app.post('/usuarios/admin', verificarToken, soloRol('admin'), async (req, res) =
     } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// Doctores: crear, editar, activar/desactivar
+// Doctores: crear, editar, activar/desactivar, eliminar
+app.delete('/doctores/:id', verificarToken, soloRol('admin'), verificarPasswordAdmin, async (req, res) => {
+    try {
+        const doctor = await Doctor.findByPk(req.params.id);
+        if (!doctor) return res.status(404).json({ error: 'Doctor no encontrado' });
+        const citasCount = await Cita.count({ where: { doctor_id: req.params.id } });
+        if (citasCount > 0) return res.status(400).json({ error: `No se puede eliminar: este doctor tiene ${citasCount} cita(s) registrada(s). Desactívalo en su lugar.` });
+        await Horario.destroy({ where: { doctor_id: req.params.id } });
+        await doctor.destroy();
+        res.json({ mensaje: 'Doctor eliminado' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/doctores', verificarToken, soloRol('admin'), async (req, res) => {
     try {
         const doctor = await Doctor.create(req.body);
@@ -832,7 +964,7 @@ app.post('/horarios', verificarToken, soloRol('admin'), async (req, res) => {
     } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-app.delete('/horarios/:id', verificarToken, soloRol('admin'), async (req, res) => {
+app.delete('/horarios/:id', verificarToken, soloRol('admin'), verificarPasswordAdmin, async (req, res) => {
     try {
         const horario = await Horario.findByPk(req.params.id);
         if (!horario) return res.status(404).json({ error: 'Horario no encontrado' });
@@ -841,7 +973,18 @@ app.delete('/horarios/:id', verificarToken, soloRol('admin'), async (req, res) =
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Servicios: crear (admin), editar precio/datos, activar/desactivar
+// Servicios: crear (admin), editar precio/datos, activar/desactivar, eliminar
+app.delete('/servicios/:id', verificarToken, soloRol('admin'), verificarPasswordAdmin, async (req, res) => {
+    try {
+        const servicio = await Servicio.findByPk(req.params.id);
+        if (!servicio) return res.status(404).json({ error: 'Servicio no encontrado' });
+        const citasCount = await Cita.count({ where: { servicio_id: req.params.id } });
+        if (citasCount > 0) return res.status(400).json({ error: `No se puede eliminar: este servicio tiene ${citasCount} cita(s) registrada(s). Desactívalo en su lugar.` });
+        await servicio.destroy();
+        res.json({ mensaje: 'Servicio eliminado' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.put('/servicios/:id', verificarToken, soloRol('admin'), async (req, res) => {
     try {
         const servicio = await Servicio.findByPk(req.params.id);
