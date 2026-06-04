@@ -200,6 +200,45 @@
         }
         .btn-atras:hover { background: #f0f4ff !important; border-color: #93c5fd !important; color: #2563eb !important; }
 
+        /* ── Formularios detalle de pago ── */
+        .detalle-pago-box {
+            background: #f8fbff;
+            border: 1.5px solid #dbeafe;
+            border-radius: 14px;
+            padding: 22px 24px;
+            margin-bottom: 20px;
+            animation: fadeInDown 0.22s ease;
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .detalle-titulo {
+            display: flex; align-items: center; gap: 9px;
+            font-size: 14px; font-weight: 700; color: #1e3a8a;
+            margin-bottom: 18px;
+        }
+        .detalle-titulo img { width: 18px; height: 18px; }
+        .campo-pago { display: flex; flex-direction: column; flex: 1; margin-bottom: 14px; }
+        .campo-pago label { font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+        .campo-pago input {
+            width: 100%; padding: 11px 14px;
+            border: 1.5px solid #e5e7eb; border-radius: 9px;
+            font-size: 14px; color: #0f172a; background: #fff;
+            outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .campo-pago input::placeholder { color: #b0b8c4; }
+        .campo-pago input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .fila-pago { display: flex; gap: 14px; }
+        .tarjeta-nota {
+            display: flex; align-items: flex-start; gap: 7px;
+            font-size: 11.5px; color: #6b7280;
+            background: #f0f7ff; border-radius: 8px;
+            padding: 9px 12px; margin-top: 6px; line-height: 1.5;
+        }
+        .tarjeta-nota img { width: 14px; height: 14px; margin-top: 1px; flex-shrink: 0; }
+
         @media (max-width: 880px) {
             .contenedor-agenda { flex-direction: column; padding: 88px 18px 40px; }
             .panel-izquierdo { width: 100%; position: static; }
@@ -208,6 +247,7 @@
         }
         @media (max-width: 500px) {
             .metodos-pago { grid-template-columns: 1fr; }
+            .fila-pago { flex-direction: column; }
         }
     </style>
 </head>
@@ -342,10 +382,64 @@
                 </div>
                 <div class="metodo-btn" onclick="seleccionarPago('seguro', this)">
                     <div class="metodo-icono">
-                        <img src="https://api.iconify.design/mdi/shield-heart-outline.svg?color=%232563eb" alt="">
+                        <img src="https://api.iconify.design/mdi/hospital-box-outline.svg?color=%232563eb" alt="">
                     </div>
                     <span class="metodo-nombre">Seguro Médico</span>
-                    <span class="metodo-desc">Presenta tu póliza en clínica</span>
+                    <span class="metodo-desc">Cobertura con tu aseguradora</span>
+                </div>
+            </div>
+
+            <!-- Formularios de detalle de pago -->
+            <div id="detalle-pago" class="detalle-pago-box" style="display:none;">
+
+                <!-- Formulario tarjeta débito / crédito -->
+                <div id="form-tarjeta" style="display:none;">
+                    <div class="detalle-titulo">
+                        <img src="https://api.iconify.design/mdi/credit-card-outline.svg?color=%231e3a8a" alt="">
+                        Datos de la tarjeta
+                    </div>
+                    <div class="campo-pago">
+                        <label for="num-tarjeta">Número de tarjeta *</label>
+                        <input type="text" id="num-tarjeta" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatearTarjeta(this)" inputmode="numeric">
+                    </div>
+                    <div class="fila-pago">
+                        <div class="campo-pago">
+                            <label for="vencimiento">Fecha de vencimiento *</label>
+                            <input type="text" id="vencimiento" placeholder="MM/AA" maxlength="5" oninput="formatearVencimiento(this)" inputmode="numeric">
+                        </div>
+                        <div class="campo-pago">
+                            <label for="cvv">CVV *</label>
+                            <input type="text" id="cvv" placeholder="123" maxlength="3" inputmode="numeric">
+                        </div>
+                    </div>
+                    <div class="campo-pago">
+                        <label for="nombre-tarjeta">Nombre en la tarjeta *</label>
+                        <input type="text" id="nombre-tarjeta" placeholder="CARLOS VELARDE" style="text-transform:uppercase;">
+                    </div>
+                    <div class="tarjeta-nota">
+                        <img src="https://api.iconify.design/mdi/lock-outline.svg?color=%236b7280" alt="">
+                        Datos solo para registro. No se realizará ningún cargo en este momento.
+                    </div>
+                </div>
+
+                <!-- Formulario seguro médico -->
+                <div id="form-seguro" style="display:none;">
+                    <div class="detalle-titulo">
+                        <img src="https://api.iconify.design/mdi/hospital-box-outline.svg?color=%231e3a8a" alt="">
+                        Datos del seguro médico
+                    </div>
+                    <div class="campo-pago">
+                        <label for="num-poliza">Número de póliza *</label>
+                        <input type="text" id="num-poliza" placeholder="POL-123456789">
+                    </div>
+                    <div class="campo-pago">
+                        <label for="aseguradora">Aseguradora *</label>
+                        <input type="text" id="aseguradora" placeholder="ej. IMSS, GNP, AXA, Seguros Atlas...">
+                    </div>
+                    <div class="tarjeta-nota">
+                        <img src="https://api.iconify.design/mdi/information-outline.svg?color=%236b7280" alt="">
+                        Presenta tu póliza física en la clínica al momento de la consulta para validar tu cobertura.
+                    </div>
                 </div>
             </div>
 

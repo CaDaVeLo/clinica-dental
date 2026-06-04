@@ -39,6 +39,15 @@
                     <input type="date" id="filtro-fecha" class="input-fecha" style="height:40px; box-sizing:border-box;">
                     <button class="btn-siguiente" style="height:40px; padding:0 20px; font-size:14px; box-sizing:border-box; margin-top:0;" onclick="aplicarFiltro()">Filtrar por fecha</button>
                     <button class="btn-outline-azul" style="height:40px; padding:0 20px; font-size:14px; box-sizing:border-box;" onclick="limpiarFiltro()">Ver todas</button>
+                    <div style="width:1px; height:28px; background:#e5e7eb; margin:0 4px;"></div>
+                    <button id="btn-orden-desc" onclick="cambiarOrdenCitas('desc')"
+                        style="height:40px; padding:0 16px; font-size:13px; font-weight:600; border-radius:8px; cursor:pointer; border:1.5px solid #2563eb; background:#eff6ff; color:#2563eb;">
+                        ↓ Más reciente
+                    </button>
+                    <button id="btn-orden-asc" onclick="cambiarOrdenCitas('asc')"
+                        style="height:40px; padding:0 16px; font-size:13px; font-weight:600; border-radius:8px; cursor:pointer; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280;">
+                        ↑ Más antigua
+                    </button>
                     <span id="badge-filtro" style="display:none; background:#dbeafe; color:#1d4ed8; font-size:13px; font-weight:600; padding:6px 12px; border-radius:20px;">
                         Mostrando: <span id="badge-fecha"></span>
                     </span>

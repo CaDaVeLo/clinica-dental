@@ -431,7 +431,7 @@ app.put('/citas/:id/notas', verificarToken, soloRol('doctor'), async (req, res) 
     }
 });
  
-app.put('/citas/:id/reprogramar', verificarToken, async (req, res) => {
+app.put('/citas/:id/reprogramar', async (req, res) => {
     try {
         const { fecha, hora, doctor_id } = req.body;
         const cita = await Cita.findByPk(req.params.id);
@@ -621,7 +621,7 @@ app.delete('/citas/:id/paciente', async (req, res) => {
         const ahora = new Date();
         const fechaHoraCita = new Date(`${cita.fecha}T${cita.hora}`);
         const diff = (fechaHoraCita - ahora) / 60000;
-        if (diff < 120) return res.status(400).json({ error: 'Solo puedes cancelar con al menos 2 horas de anticipación' });
+        if (diff < 1440) return res.status(400).json({ error: 'Solo puedes cancelar con al menos 1 día de anticipación' });
         await cita.update({ estado: 'cancelada' });
         res.json({ mensaje: 'Cita cancelada' });
     } catch (e) {

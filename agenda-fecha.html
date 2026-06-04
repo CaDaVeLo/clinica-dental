@@ -137,6 +137,8 @@
         .cal-dias span.disponible:hover { background: rgba(255,255,255,0.2); }
         .cal-dias span.seleccionado { background: #fff; color: #1d4ed8; font-weight: 800; border-radius: 50%; }
         .cal-dias span.hoy { border: 1.5px solid rgba(255,255,255,0.4); border-radius: 50%; }
+        .cal-dias span.domingo { color: rgba(255,255,255,0.22); cursor: not-allowed; font-size: 12px; }
+        .cal-dias span.domingo:hover { background: none; }
 
         /* Panel de horarios */
         .horarios-contenedor { flex: 1; min-width: 0; }
@@ -276,7 +278,7 @@
 
             <div class="ventaja">
                 <div class="ventaja-icono"><img src="https://api.iconify.design/mdi/calendar-check-outline.svg?color=white" alt=""></div>
-                <div><strong>Horarios flexibles</strong><span>Lunes a sábado</span></div>
+                <div><strong>Horarios flexibles</strong><span>Lunes a sábado (domingos cerrado)</span></div>
             </div>
             <div class="ventaja">
                 <div class="ventaja-icono"><img src="https://api.iconify.design/mdi/clock-time-four-outline.svg?color=white" alt=""></div>
