@@ -3,6 +3,8 @@ const token = localStorage.getItem('token');
 const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 let citaSeleccionadaId = null;
 let todosPacientes = [];
+let citasData = [];
+let ordenCitas = 'desc'; // desc = más reciente primero (mayor ID), asc = más antigua primero
 
 function esc(str) {
     if (str === null || str === undefined) return '';
@@ -13,17 +15,17 @@ function esc(str) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
- 
+
 if (!token) window.location.href = 'login.html';
- 
+
 document.getElementById('nombre-usuario').textContent = usuario.nombre || '';
- 
+
 function cerrarSesion() {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
     window.location.href = 'login.html';
 }
- 
+
 function mostrarSeccion(seccion, link) {
     document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('activo'));
     link.classList.add('activo');
@@ -44,7 +46,7 @@ function mostrarSeccion(seccion, link) {
     if (seccion === 'mensajes') cargarMensajes();
     if (seccion === 'resenas') cargarResenas();
 }
- 
+
 function aplicarFiltro() {
     const fecha = document.getElementById('filtro-fecha').value;
     if (!fecha) {
@@ -63,64 +65,88 @@ function limpiarFiltro() {
     cargarCitas('');
 }
 
+function cambiarOrdenCitas(orden) {
+    ordenCitas = orden;
+
+    // Actualizar estilos de los botones
+    const btnDesc = document.getElementById('btn-orden-desc');
+    const btnAsc = document.getElementById('btn-orden-asc');
+    if (btnDesc && btnAsc) {
+        const estiloActivo = 'border:1.5px solid #2563eb; background:#eff6ff; color:#2563eb;';
+        const estiloInactivo = 'border:1.5px solid #e5e7eb; background:#fff; color:#6b7280;';
+        btnDesc.style.cssText = `height:40px; padding:0 16px; font-size:13px; font-weight:600; border-radius:8px; cursor:pointer; ${orden === 'desc' ? estiloActivo : estiloInactivo}`;
+        btnAsc.style.cssText  = `height:40px; padding:0 16px; font-size:13px; font-weight:600; border-radius:8px; cursor:pointer; ${orden === 'asc'  ? estiloActivo : estiloInactivo}`;
+    }
+
+    if (citasData.length) renderTablaCitas(citasData);
+}
+
 async function cargarCitas(fechaParam) {
     const fecha = fechaParam !== undefined ? fechaParam : document.getElementById('filtro-fecha').value;
     const url = fecha ? `${API}/citas?fecha=${fecha}` : `${API}/citas`;
 
     try {
         const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        const citas = await res.json();
+        citasData = await res.json();
         const contenedor = document.getElementById('tabla-citas');
 
-        if (!citas.length) {
+        if (!citasData.length) {
             contenedor.innerHTML = fecha
                 ? `<p style="color:#888;">No hay citas para el ${document.getElementById('badge-fecha').textContent}.</p>`
                 : '<p style="color:#888;">No hay citas.</p>';
             return;
         }
- 
-        contenedor.innerHTML = `
-            <table class="tabla">
-                <thead>
-                    <tr>
-                        <th>Paciente</th>
-                        <th>Servicio</th>
-                        <th>Doctor</th>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                        <th>Estado</th>
-                        <th>Pago</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${citas.map(c => `
-                        <tr>
-                            <td>${esc(c.paciente?.nombre)}</td>
-                            <td>${esc(c.servicio?.nombre)}</td>
-                            <td>${esc(c.doctore?.nombre)}</td>
-                            <td>${esc(c.fecha)}</td>
-                            <td>${esc(c.hora?.slice(0,5))}</td>
-                            <td><span class="badge ${c.estado === 'confirmada' ? 'confirmada' : c.estado === 'cancelada' ? 'cancelada' : 'pendiente'}">${esc(c.estado)}</span></td>
-                            <td>$${Number(c.pago?.monto || 0).toLocaleString()}</td>
-                            <td>
-                                <button class="btn-tabla" onclick="abrirModalEstado(${c.id})">Estado</button>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
+
+        renderTablaCitas(citasData);
     } catch (e) {
         document.getElementById('tabla-citas').innerHTML = '<p style="color:red;">Error al cargar citas.</p>';
     }
 }
- 
+
+function renderTablaCitas(citas) {
+    const sorted = [...citas].sort((a, b) =>
+        ordenCitas === 'desc' ? b.id - a.id : a.id - b.id
+    );
+
+    document.getElementById('tabla-citas').innerHTML = `
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Paciente</th>
+                    <th>Servicio</th>
+                    <th>Doctor</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Estado</th>
+                    <th>Pago</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${sorted.map(c => `
+                    <tr>
+                        <td>${esc(c.paciente?.nombre)}</td>
+                        <td>${esc(c.servicio?.nombre)}</td>
+                        <td>${esc(c.doctore?.nombre)}</td>
+                        <td>${esc(c.fecha)}</td>
+                        <td>${esc(c.hora?.slice(0,5))}</td>
+                        <td><span class="badge ${c.estado === 'confirmada' ? 'confirmada' : c.estado === 'cancelada' ? 'cancelada' : 'pendiente'}">${esc(c.estado)}</span></td>
+                        <td>$${Number(c.pago?.monto || 0).toLocaleString()}</td>
+                        <td>
+                            <button class="btn-tabla" onclick="abrirModalEstado(${c.id})">Estado</button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
 function abrirModalEstado(id) {
     citaSeleccionadaId = id;
     document.getElementById('modal-estado').style.display = 'flex';
 }
- 
+
 async function cambiarEstado(estado) {
     try {
         await fetch(`${API}/citas/${citaSeleccionadaId}/estado`, {
@@ -134,7 +160,7 @@ async function cambiarEstado(estado) {
         alert('Error al cambiar estado.');
     }
 }
- 
+
 async function cargarPacientes() {
     try {
         const res = await fetch(`${API}/pacientes`, { headers: { Authorization: `Bearer ${token}` } });
@@ -144,7 +170,7 @@ async function cargarPacientes() {
         document.getElementById('tabla-pacientes').innerHTML = '<p style="color:red;">Error al cargar pacientes.</p>';
     }
 }
- 
+
 function renderPacientes(pacientes) {
     const contenedor = document.getElementById('tabla-pacientes');
     if (!pacientes.length) {
@@ -176,7 +202,7 @@ function renderPacientes(pacientes) {
         </table>
     `;
 }
- 
+
 function filtrarPacientes() {
     const q = document.getElementById('buscar-paciente').value.toLowerCase();
     const filtrados = todosPacientes.filter(p =>
@@ -186,11 +212,11 @@ function filtrarPacientes() {
     );
     renderPacientes(filtrados);
 }
- 
+
 function abrirModalPaciente() {
     document.getElementById('modal-paciente').style.display = 'flex';
 }
- 
+
 async function guardarPaciente() {
     const nombre = document.getElementById('p-nombre').value.trim();
     const curp = document.getElementById('p-curp').value.trim();
@@ -199,27 +225,27 @@ async function guardarPaciente() {
     const fecha_nac = document.getElementById('p-fecha-nac').value;
     const direccion = document.getElementById('p-direccion').value.trim();
     const error = document.getElementById('error-paciente');
- 
+
     if (!nombre || !curp || !email) {
         error.style.display = 'block';
         error.textContent = 'Nombre, CURP y email son obligatorios.';
         return;
     }
- 
+
     try {
         const res = await fetch(`${API}/pacientes`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ nombre, curp, email, telefono, fecha_nac, direccion })
         });
- 
+
         if (!res.ok) {
             const data = await res.json();
             error.style.display = 'block';
             error.textContent = data.error || 'Error al guardar.';
             return;
         }
- 
+
         cerrarModal('modal-paciente');
         cargarPacientes();
     } catch (e) {
@@ -227,18 +253,18 @@ async function guardarPaciente() {
         error.textContent = 'Error al conectar con el servidor.';
     }
 }
- 
+
 async function cargarPagos() {
     try {
         const res = await fetch(`${API}/pagos`, { headers: { Authorization: `Bearer ${token}` } });
         const pagos = await res.json();
         const contenedor = document.getElementById('tabla-pagos');
- 
+
         if (!pagos.length) {
             contenedor.innerHTML = '<p style="color:#888;">No hay pagos registrados.</p>';
             return;
         }
- 
+
         contenedor.innerHTML = `
             <table class="tabla">
                 <thead>
@@ -276,7 +302,7 @@ async function cargarPagos() {
         document.getElementById('tabla-pagos').innerHTML = '<p style="color:red;">Error al cargar pagos.</p>';
     }
 }
- 
+
 function cerrarModal(id) {
     document.getElementById(id).style.display = 'none';
 }

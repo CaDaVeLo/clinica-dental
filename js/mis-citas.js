@@ -1,6 +1,8 @@
 const API = 'http://localhost:3000';
 let citaActual = null;
 let citaResenaId = null;
+let citasCache = [];
+let ordenCitas = 'desc'; // desc = más reciente primero, asc = más antigua primero
 
 function esc(str) {
     if (str === null || str === undefined) return '';
@@ -33,58 +35,91 @@ async function buscar() {
         }
 
         const data = await res.json();
-        const citas = data.citas;
+        citasCache = data.citas;
 
-        if (!citas.length) {
+        if (!citasCache.length) {
             resultado.innerHTML = '<p style="color:#888;">No tienes citas registradas.</p>';
             return;
         }
 
-        resultado.innerHTML = `<p class="conteo-citas">${citas.length} cita(s) encontrada(s)</p>` +
-            citas.map(c => {
-                const puedeCancelar = puedeModificar(c.fecha, c.hora);
-                const cancelada = c.estado === 'cancelada';
-                const completada = c.estado === 'completada';
-                const tieneResena = !!c.resena;
-                return `
-                <div class="cita-card" id="cita-${c.id}">
-                    <div class="cita-header">
-                        <h3>${esc(c.servicio?.nombre) || 'Servicio'}</h3>
-                        <span class="badge ${c.estado === 'confirmada' ? 'confirmada' : c.estado === 'cancelada' ? 'cancelada' : 'pendiente'}">${esc(c.estado)}</span>
-                    </div>
-                    <p class="cita-info">
-                        ${esc(c.fecha)} &nbsp; ${esc(c.hora?.slice(0, 5))} &nbsp;
-                        ${esc(c.doctore?.nombre)} &nbsp;
-                        $${Number(c.servicio?.precio || 0).toLocaleString()} MXN
-                    </p>
-                    ${!cancelada && !completada ? `
-                    <div class="cita-acciones">
-                        <button class="btn-reprogramar" onclick="abrirReprogramar(${c.id}, '${c.fecha}', '${c.hora}', ${c.servicio_id})" ${!puedeCancelar ? 'disabled title="Menos de 2 horas para la cita"' : ''}>Reprogramar</button>
-                        <button class="btn-cancelar" onclick="cancelar(${c.id}, '${c.fecha}', '${c.hora}')" ${!puedeCancelar ? 'disabled title="Menos de 2 horas para la cita"' : ''}>Cancelar</button>
-                    </div>` : ''}
-                    ${completada ? `
-                    <div class="cita-acciones">
-                        ${tieneResena
-                            ? `<span class="resena-enviada">&#10003; Reseña enviada — ${'★'.repeat(c.resena.estrellas)}${'☆'.repeat(5 - c.resena.estrellas)}</span>`
-                            : `<button class="btn-resena" onclick="abrirResena(${c.id}, '${esc(c.servicio?.nombre)}')">Dejar reseña</button>`
-                        }
-                    </div>` : ''}
-                </div>
-            `}).join('');
+        renderCitas();
     } catch (e) {
         resultado.innerHTML = '<p style="color:red;">Error al conectar con el servidor.</p>';
     }
 }
 
+function renderCitas() {
+    const resultado = document.getElementById('resultado');
+
+    const sorted = [...citasCache].sort((a, b) =>
+        ordenCitas === 'desc' ? b.id - a.id : a.id - b.id
+    );
+
+    const barraOrden = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+            <span class="conteo-citas">${sorted.length} cita(s) encontrada(s)</span>
+            <div style="display:flex; gap:8px;">
+                <button onclick="cambiarOrden('desc')"
+                    style="padding:7px 14px; border-radius:8px; border:1.5px solid ${ordenCitas === 'desc' ? '#2563eb' : '#e5e7eb'}; background:${ordenCitas === 'desc' ? '#eff6ff' : '#fff'}; color:${ordenCitas === 'desc' ? '#2563eb' : '#6b7280'}; font-size:12.5px; font-weight:600; cursor:pointer;">
+                    ↓ Más reciente
+                </button>
+                <button onclick="cambiarOrden('asc')"
+                    style="padding:7px 14px; border-radius:8px; border:1.5px solid ${ordenCitas === 'asc' ? '#2563eb' : '#e5e7eb'}; background:${ordenCitas === 'asc' ? '#eff6ff' : '#fff'}; color:${ordenCitas === 'asc' ? '#2563eb' : '#6b7280'}; font-size:12.5px; font-weight:600; cursor:pointer;">
+                    ↑ Más antigua
+                </button>
+            </div>
+        </div>
+    `;
+
+    const tarjetas = sorted.map(c => {
+        const puedeCancelar = puedeModificar(c.fecha, c.hora);
+        const cancelada = c.estado === 'cancelada';
+        const completada = c.estado === 'completada';
+        const tieneResena = !!c.resena;
+        return `
+            <div class="cita-card" id="cita-${c.id}">
+                <div class="cita-header">
+                    <h3>${esc(c.servicio?.nombre) || 'Servicio'}</h3>
+                    <span class="badge ${c.estado === 'confirmada' ? 'confirmada' : c.estado === 'cancelada' ? 'cancelada' : 'pendiente'}">${esc(c.estado)}</span>
+                </div>
+                <p class="cita-info">
+                    ${esc(c.fecha)} &nbsp; ${esc(c.hora?.slice(0, 5))} &nbsp;
+                    ${esc(c.doctore?.nombre)} &nbsp;
+                    $${Number(c.servicio?.precio || 0).toLocaleString()} MXN
+                </p>
+                ${!cancelada && !completada ? `
+                <div class="cita-acciones">
+                    <button class="btn-reprogramar" onclick="abrirReprogramar(${c.id}, '${c.fecha}', '${c.hora}', ${c.servicio_id})" ${!puedeCancelar ? 'disabled title="Menos de 24 horas para la cita"' : ''}>Reprogramar</button>
+                    <button class="btn-cancelar" onclick="cancelar(${c.id}, '${c.fecha}', '${c.hora}')" ${!puedeCancelar ? 'disabled title="Menos de 24 horas para la cita"' : ''}>Cancelar</button>
+                </div>` : ''}
+                ${completada ? `
+                <div class="cita-acciones">
+                    ${tieneResena
+                        ? `<span class="resena-enviada">&#10003; Reseña enviada — ${'★'.repeat(c.resena.estrellas)}${'☆'.repeat(5 - c.resena.estrellas)}</span>`
+                        : `<button class="btn-resena" onclick="abrirResena(${c.id}, '${esc(c.servicio?.nombre)}')">Dejar reseña</button>`
+                    }
+                </div>` : ''}
+            </div>
+        `;
+    }).join('');
+
+    resultado.innerHTML = barraOrden + tarjetas;
+}
+
+function cambiarOrden(orden) {
+    ordenCitas = orden;
+    renderCitas();
+}
+
 function puedeModificar(fecha, hora) {
     const ahora = new Date();
     const fechaHora = new Date(`${fecha}T${hora}`);
-    return (fechaHora - ahora) > 2 * 60 * 60 * 1000;
+    return (fechaHora - ahora) > 24 * 60 * 60 * 1000;
 }
 
 async function cancelar(id, fecha, hora) {
     if (!puedeModificar(fecha, hora)) {
-        alert('Solo puedes cancelar con al menos 2 horas de anticipación.');
+        alert('Solo puedes cancelar con al menos 1 día de anticipación.');
         return;
     }
     if (!confirm('¿Seguro que quieres cancelar esta cita?')) return;
@@ -98,12 +133,10 @@ async function cancelar(id, fecha, hora) {
             return;
         }
 
-        const card = document.getElementById(`cita-${id}`);
-        if (card) {
-            card.querySelector('.cita-header .badge').textContent = 'cancelada';
-            card.querySelector('.cita-header .badge').className = 'badge cancelada';
-            card.querySelector('.cita-acciones')?.remove();
-        }
+        // Actualizar la caché local y volver a renderizar
+        const idx = citasCache.findIndex(c => c.id === id);
+        if (idx !== -1) citasCache[idx] = { ...citasCache[idx], estado: 'cancelada' };
+        renderCitas();
     } catch (e) {
         alert('Error al conectar con el servidor.');
     }
@@ -111,7 +144,7 @@ async function cancelar(id, fecha, hora) {
 
 function abrirReprogramar(id, fecha, hora, servicio_id) {
     if (!puedeModificar(fecha, hora)) {
-        alert('Solo puedes reprogramar con al menos 2 horas de anticipación.');
+        alert('Solo puedes reprogramar con al menos 1 día de anticipación.');
         return;
     }
     citaActual = { id, servicio_id };
@@ -119,12 +152,24 @@ function abrirReprogramar(id, fecha, hora, servicio_id) {
     document.getElementById('rep-slots').innerHTML = '';
     document.getElementById('rep-slot-sel').value = '';
     document.getElementById('rep-doctor-sel').value = '';
+
+    // Bloquear domingos en el input de fecha del modal
+    const inputFecha = document.getElementById('rep-fecha');
+    inputFecha.min = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
     document.getElementById('modal-reprogramar').style.display = 'flex';
 }
 
 async function buscarSlots() {
     const fecha = document.getElementById('rep-fecha').value;
     if (!fecha || !citaActual) return;
+
+    // Validar que no sea domingo
+    const diaSemana = new Date(fecha + 'T12:00:00').getDay();
+    if (diaSemana === 0) {
+        document.getElementById('rep-slots').innerHTML = '<p style="font-size:13px; color:#ef4444;">Los domingos no hay atención. Por favor elige otro día.</p>';
+        return;
+    }
 
     document.getElementById('rep-slots').innerHTML = '<p style="font-size:13px; color:#888;">Buscando horarios...</p>';
 
