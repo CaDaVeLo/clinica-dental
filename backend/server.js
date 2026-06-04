@@ -998,7 +998,7 @@ app.put('/servicios/:id', verificarToken, soloRol('admin'), async (req, res) => 
 
 const PORT = process.env.PORT || 3000;
  
-sequelize.sync({ alter: true }).then(() => {
+sequelize.sync().then(() => {
     app.listen(PORT, () => {
         console.log(`Servidor corriendo en http://localhost:${PORT}`);
     });
