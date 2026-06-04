@@ -51,12 +51,16 @@ function mostrarSeccion(seccion, link) {
 
 async function cargarResumen() {
     const contenedor = document.getElementById('contenido-resumen');
+    contenedor.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;color:#94a3b8;font-size:14px;margin-bottom:24px;">
+            <div class="spinner-sm"></div> Cargando datos...
+        </div>`;
     try {
         const [resDoctores, resServicios, resUsuarios, resCitas] = await Promise.all([
-            fetch(`${API}/doctores`, { headers: { Authorization: `Bearer ${token}` } }),
-            fetch(`${API}/servicios`, { headers: { Authorization: `Bearer ${token}` } }),
-            fetch(`${API}/usuarios`, { headers: { Authorization: `Bearer ${token}` } }),
-            fetch(`${API}/citas`,    { headers: { Authorization: `Bearer ${token}` } })
+            fetch(`${API}/doctores?todos=true`, { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API}/servicios`,            { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API}/usuarios`,             { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API}/citas`,                { headers: { Authorization: `Bearer ${token}` } })
         ]);
 
         const doctores  = await resDoctores.json();
@@ -64,39 +68,213 @@ async function cargarResumen() {
         const usuarios  = await resUsuarios.json();
         const citas     = resCitas.ok ? await resCitas.json() : [];
 
-        const activos = arr => Array.isArray(arr) ? arr.filter(x => x.activo !== false).length : 0;
+        const hoy = new Date().toISOString().slice(0, 10);
+        const doctoresActivos  = Array.isArray(doctores)  ? doctores.filter(x => x.activo !== false).length : 0;
+        const serviciosActivos = Array.isArray(servicios) ? servicios.filter(x => x.activo !== false).length : 0;
+        const totalUsuarios    = Array.isArray(usuarios)  ? usuarios.length : 0;
+        const totalCitas       = Array.isArray(citas)     ? citas.length : 0;
+        const citasHoy         = Array.isArray(citas)     ? citas.filter(c => c.fecha === hoy).length : 0;
+        const citasPendientes  = Array.isArray(citas)     ? citas.filter(c => c.estado === 'pendiente').length : 0;
+        const citasConfirmadas = Array.isArray(citas)     ? citas.filter(c => c.estado === 'confirmada').length : 0;
+        const citasCanceladas  = Array.isArray(citas)     ? citas.filter(c => c.estado === 'cancelada').length : 0;
+
+        const citasProximas = Array.isArray(citas)
+            ? citas.filter(c => c.fecha >= hoy && (c.estado === 'pendiente' || c.estado === 'confirmada'))
+                   .slice(0, 5)
+            : [];
+
+        const fechaFormateada = new Date().toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 
         contenedor.innerHTML = `
-            <div class="admin-grid">
-                <div class="admin-stat">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:8px;">
+                <p style="font-size:13px;color:#64748b;margin:0;">
+                    <i class="fa-regular fa-calendar" style="margin-right:5px;"></i>${fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1)}
+                </p>
+                <span style="background:#eff6ff;color:#2563eb;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;">
+                    Panel activo
+                </span>
+            </div>
+
+            <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px;">
+                Entidades del sistema
+            </p>
+            <div class="admin-grid" style="margin-bottom:20px;">
+                <div class="admin-stat" style="border-left:4px solid #2563eb;">
+                    <div class="admin-stat-icon" style="color:#2563eb;"><i class="fa-solid fa-user-doctor"></i></div>
                     <p>Doctores activos</p>
-                    <p>${activos(doctores)}</p>
+                    <p>${doctoresActivos}</p>
+                    <p class="admin-stat-sub">de ${Array.isArray(doctores) ? doctores.length : 0} registrados</p>
                 </div>
-                <div class="admin-stat">
+                <div class="admin-stat" style="border-left:4px solid #0891b2;">
+                    <div class="admin-stat-icon" style="color:#0891b2;"><i class="fa-solid fa-tooth"></i></div>
                     <p>Servicios activos</p>
-                    <p>${activos(servicios)}</p>
+                    <p>${serviciosActivos}</p>
+                    <p class="admin-stat-sub">de ${Array.isArray(servicios) ? servicios.length : 0} registrados</p>
                 </div>
-                <div class="admin-stat">
+                <div class="admin-stat" style="border-left:4px solid #7c3aed;">
+                    <div class="admin-stat-icon" style="color:#7c3aed;"><i class="fa-solid fa-users"></i></div>
                     <p>Usuarios del sistema</p>
-                    <p>${Array.isArray(usuarios) ? usuarios.length : '—'}</p>
+                    <p>${totalUsuarios}</p>
+                    <p class="admin-stat-sub">admins, doctores, recepcionistas</p>
                 </div>
-                <div class="admin-stat">
+                <div class="admin-stat" style="border-left:4px solid #0f172a;">
+                    <div class="admin-stat-icon" style="color:#0f172a;"><i class="fa-solid fa-clipboard-list"></i></div>
                     <p>Total de citas</p>
-                    <p>${Array.isArray(citas) ? citas.length : '—'}</p>
+                    <p>${totalCitas}</p>
+                    <p class="admin-stat-sub">historial completo</p>
                 </div>
             </div>
-            <div style="background:#fff; border-radius:14px; padding:22px 24px; box-shadow:0 1px 6px rgba(0,0,0,.07);">
-                <p style="font-size:15px; font-weight:700; color:#0f172a; margin-bottom:16px;">Accesos rápidos</p>
-                <div style="display:flex; flex-wrap:wrap; gap:12px;">
-                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="document.querySelector('[onclick*=doctores]').click()">Gestionar Doctores</button>
-                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="document.querySelector('[onclick*=horarios]').click()">Gestionar Horarios</button>
-                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="document.querySelector('[onclick*=servicios]').click()">Gestionar Servicios</button>
-                    <button class="btn-siguiente" style="padding:10px 20px;" onclick="document.querySelector('[onclick*=usuarios]').click()">Gestionar Usuarios</button>
+
+            <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px;">
+                Estado de citas
+            </p>
+            <div class="admin-grid" style="margin-bottom:28px;">
+                <div class="admin-stat" style="border-left:4px solid #2563eb;">
+                    <div class="admin-stat-icon" style="color:#2563eb;"><i class="fa-solid fa-calendar-days"></i></div>
+                    <p>Citas hoy</p>
+                    <p style="color:#2563eb;">${citasHoy}</p>
+                    <p class="admin-stat-sub">programadas para hoy</p>
+                </div>
+                <div class="admin-stat" style="border-left:4px solid #d97706;">
+                    <div class="admin-stat-icon" style="color:#d97706;"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <p>Pendientes</p>
+                    <p style="color:#d97706;">${citasPendientes}</p>
+                    <p class="admin-stat-sub">por confirmar</p>
+                </div>
+                <div class="admin-stat" style="border-left:4px solid #16a34a;">
+                    <div class="admin-stat-icon" style="color:#16a34a;"><i class="fa-solid fa-circle-check"></i></div>
+                    <p>Confirmadas</p>
+                    <p style="color:#16a34a;">${citasConfirmadas}</p>
+                    <p class="admin-stat-sub">listas para atención</p>
+                </div>
+                <div class="admin-stat" style="border-left:4px solid #dc2626;">
+                    <div class="admin-stat-icon" style="color:#dc2626;"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <p>Canceladas</p>
+                    <p style="color:#dc2626;">${citasCanceladas}</p>
+                    <p class="admin-stat-sub">del total histórico</p>
+                </div>
+            </div>
+
+            ${citasProximas.length ? `
+            <div style="background:#fff;border-radius:14px;padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.07);margin-bottom:24px;">
+                <p style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px;"><i class="fa-solid fa-thumbtack" style="margin-right:7px;color:#2563eb;"></i>Próximas citas</p>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    ${citasProximas.map(c => {
+                        const estadoColor = c.estado === 'confirmada' ? '#16a34a' : '#d97706';
+                        const estadoBg   = c.estado === 'confirmada' ? '#dcfce7' : '#fef3c7';
+                        return `
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;gap:10px;flex-wrap:wrap;">
+                            <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                                <div style="width:36px;height:36px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:#2563eb;"><i class="fa-solid fa-circle-user"></i></div>
+                                <div>
+                                    <p style="margin:0;font-size:14px;font-weight:600;color:#0f172a;">${esc(c.paciente?.nombre || '—')}</p>
+                                    <p style="margin:0;font-size:12px;color:#64748b;">${esc(c.servicio?.nombre || '—')} · Dr. ${esc(c.doctor?.nombre || '—')}</p>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                                <span style="font-size:13px;color:#475569;">${c.fecha} · ${(c.hora||'').slice(0,5)}</span>
+                                <span style="background:${estadoBg};color:${estadoColor};font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">
+                                    ${c.estado}
+                                </span>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>` : ''}
+
+            <div style="background:#fff;border-radius:14px;padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.07);">
+                <p style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px;"><i class="fa-solid fa-bolt" style="margin-right:7px;color:#d97706;"></i>Accesos rápidos</p>
+                <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                    <button class="btn-acceso-rapido" onclick="document.querySelector('[onclick*=doctores]').click()"><i class="fa-solid fa-user-doctor"></i> Doctores</button>
+                    <button class="btn-acceso-rapido" onclick="document.querySelector('[onclick*=horarios]').click()"><i class="fa-solid fa-clock"></i> Horarios</button>
+                    <button class="btn-acceso-rapido" onclick="document.querySelector('[onclick*=servicios]').click()"><i class="fa-solid fa-tooth"></i> Servicios</button>
+                    <button class="btn-acceso-rapido" onclick="document.querySelector('[onclick*=usuarios]').click()"><i class="fa-solid fa-users"></i> Usuarios</button>
                 </div>
             </div>
         `;
     } catch (e) {
         contenedor.innerHTML = '<p style="color:red;">Error al cargar resumen.</p>';
+    }
+}
+
+// ══════════════════════════════════════════
+// CONFIRMAR ELIMINACIÓN (modal reutilizable)
+// ══════════════════════════════════════════
+
+let pendienteEliminar = { tipo: null, id: null };
+
+function abrirConfirmEliminar(tipo, id, nombre) {
+    pendienteEliminar = { tipo, id };
+
+    const mensajes = {
+        servicio: `¿Eliminar permanentemente el servicio <strong>"${esc(nombre)}"</strong>?<br>
+                   Solo es posible si no tiene citas registradas. Si el servicio tiene citas, desactívalo en su lugar.`,
+        doctor:   `¿Eliminar permanentemente al doctor <strong>"${esc(nombre)}"</strong>?<br>
+                   Solo es posible si no tiene citas registradas. Sus horarios también serán eliminados.`,
+        horario:  `¿Eliminar permanentemente este bloque de horario?<br>
+                   Los pacientes no podrán agendar en este horario.`,
+        usuario:  `¿Eliminar permanentemente al usuario <strong>"${esc(nombre)}"</strong>?<br>
+                   Esta acción no se puede deshacer.`
+    };
+
+    document.getElementById('confirmar-eliminar-mensaje').innerHTML = `
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:16px;color:#991b1b;font-size:14px;line-height:1.6;">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i>${mensajes[tipo] || '¿Confirmar eliminación?'}
+        </div>
+    `;
+    document.getElementById('confirmar-password-admin').value = '';
+    document.getElementById('error-confirmar-eliminar').style.display = 'none';
+    document.getElementById('modal-confirmar-eliminar').style.display = 'flex';
+}
+
+async function ejecutarEliminar() {
+    const passwordAdmin = document.getElementById('confirmar-password-admin').value;
+    const errDiv = document.getElementById('error-confirmar-eliminar');
+    errDiv.style.display = 'none';
+
+    if (!passwordAdmin) {
+        errDiv.style.display = 'block';
+        errDiv.textContent = 'La contraseña de administrador es obligatoria.';
+        return;
+    }
+
+    const endpoints = {
+        servicio: `${API}/servicios/${pendienteEliminar.id}`,
+        doctor:   `${API}/doctores/${pendienteEliminar.id}`,
+        horario:  `${API}/horarios/${pendienteEliminar.id}`,
+        usuario:  `${API}/usuarios/${pendienteEliminar.id}`
+    };
+
+    const url = endpoints[pendienteEliminar.tipo];
+    if (!url) return;
+
+    const btn = document.getElementById('btn-ejecutar-eliminar');
+    btn.disabled = true;
+    btn.textContent = 'Eliminando...';
+
+    try {
+        const res = await fetch(url, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ passwordAdmin })
+        });
+        const d = await res.json();
+        if (!res.ok) {
+            errDiv.style.display = 'block';
+            errDiv.textContent = d.error || 'Error al eliminar.';
+            return;
+        }
+        cerrarModal('modal-confirmar-eliminar');
+        if (pendienteEliminar.tipo === 'servicio') cargarServicios();
+        if (pendienteEliminar.tipo === 'doctor')   cargarDoctores();
+        if (pendienteEliminar.tipo === 'horario')  cargarHorarios();
+        if (pendienteEliminar.tipo === 'usuario')  cargarUsuarios();
+    } catch (e) {
+        errDiv.style.display = 'block';
+        errDiv.textContent = 'Error al conectar con el servidor.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Eliminar permanentemente';
     }
 }
 
@@ -147,6 +325,7 @@ function renderTablaDoctores() {
                                 onclick="toggleDoctor(${d.id}, ${d.activo})">
                                 ${d.activo ? 'Desactivar' : 'Activar'}
                             </button>
+                            <button class="btn-peligro" onclick="abrirConfirmEliminar('doctor', ${d.id}, '${esc(d.nombre)}')">Eliminar</button>
                         </td>
                     </tr>
                 `).join('')}
@@ -279,7 +458,7 @@ async function cargarHorarios() {
                             <td>${esc(h.hora_fin?.slice(0,5))}</td>
                             <td><span class="badge ${h.activo ? 'confirmada' : 'inactivo'}">${h.activo ? 'Activo' : 'Inactivo'}</span></td>
                             <td>
-                                <button class="btn-peligro" onclick="eliminarHorario(${h.id})">Eliminar</button>
+                                <button class="btn-peligro" onclick="abrirConfirmEliminar('horario', ${h.id}, '')">Eliminar</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -337,17 +516,6 @@ async function guardarHorario() {
     }
 }
 
-async function eliminarHorario(id) {
-    if (!confirm('¿Eliminar este horario? Los doctores no estarán disponibles en ese bloque.')) return;
-    try {
-        await fetch(`${API}/horarios/${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        cargarHorarios();
-    } catch (e) { alert('Error al eliminar horario.'); }
-}
-
 // ══════════════════════════════════════════
 // SERVICIOS
 // ══════════════════════════════════════════
@@ -357,7 +525,6 @@ let todosServicios = [];
 
 async function cargarServicios() {
     try {
-        // Obtener todos (incluyendo inactivos) usando el endpoint sin filtro activo
         const res = await fetch(`${API}/servicios`, { headers: { Authorization: `Bearer ${token}` } });
         todosServicios = await res.json();
         renderTablaServicios();
@@ -397,6 +564,7 @@ function renderTablaServicios() {
                                 onclick="toggleServicio(${s.id}, ${s.activo})">
                                 ${s.activo ? 'Desactivar' : 'Activar'}
                             </button>
+                            <button class="btn-peligro" onclick="abrirConfirmEliminar('servicio', ${s.id}, '${esc(s.nombre)}')">Eliminar</button>
                         </td>
                     </tr>
                 `).join('')}
@@ -446,7 +614,6 @@ async function guardarServicio() {
     const body = { nombre, descripcion, categoria, duracion_min, precio, icono };
 
     if (servicioEditandoId) {
-        // Editar (admin)
         try {
             const res = await fetch(`${API}/servicios/${servicioEditandoId}`, {
                 method: 'PUT',
@@ -465,7 +632,6 @@ async function guardarServicio() {
             return;
         }
     } else {
-        // Crear (admin usa el endpoint de recepcionista que ya existe, o añadimos uno)
         try {
             const res = await fetch(`${API}/servicios`, {
                 method: 'POST',
@@ -545,7 +711,7 @@ function renderTablaUsuarios() {
                         <td style="display:flex; gap:6px; flex-wrap:wrap;">
                             <button class="btn-tabla" onclick="abrirModalUsuario(${u.id})">Editar</button>
                             <button class="btn-warning" onclick="abrirCambiarPassword(${u.id}, '${esc(u.nombre)}')">Contraseña</button>
-                            ${u.rol !== 'admin' ? `<button class="btn-peligro" onclick="eliminarUsuario(${u.id}, '${esc(u.nombre)}')">Eliminar</button>` : ''}
+                            ${u.rol !== 'admin' ? `<button class="btn-peligro" onclick="abrirConfirmEliminar('usuario', ${u.id}, '${esc(u.nombre)}')">Eliminar</button>` : ''}
                         </td>
                     </tr>
                 `).join('')}
@@ -673,19 +839,6 @@ async function guardarPassword() {
         errDiv.style.display = 'block';
         errDiv.textContent = 'Error al conectar con el servidor.';
     }
-}
-
-async function eliminarUsuario(id, nombre) {
-    if (!confirm(`¿Eliminar al usuario "${nombre}"? Esta acción no se puede deshacer.`)) return;
-    try {
-        const res = await fetch(`${API}/usuarios/${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        const d = await res.json();
-        if (!res.ok) { alert(d.error || 'No se pudo eliminar el usuario.'); return; }
-        cargarUsuarios();
-    } catch (e) { alert('Error al conectar con el servidor.'); }
 }
 
 // Carga inicial
